@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, Loader2, Check, SkipForward, 
-  Pause, Play, RotateCcw, Clock, Weight, ChevronLeft, ChevronRight
+  Clock, Weight, MessageSquare, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -23,7 +23,7 @@ export default function ActiveWorkout() {
   const [completedSets, setCompletedSets] = useState({});
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [maxRestTime, setMaxRestTime] = useState(0);
 
   const { data: workout, isLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -44,7 +44,7 @@ export default function ActiveWorkout() {
   // Rest timer
   useEffect(() => {
     let interval;
-    if (isResting && restTime > 0 && !isPaused) {
+    if (isResting && restTime > 0) {
       interval = setInterval(() => {
         setRestTime((prev) => prev - 1);
       }, 1000);
@@ -52,7 +52,7 @@ export default function ActiveWorkout() {
       setIsResting(false);
     }
     return () => clearInterval(interval);
-  }, [isResting, restTime, isPaused]);
+  }, [isResting, restTime]);
 
   const handleCompleteSet = useCallback(() => {
     const exerciseId = currentExercise.id;
@@ -66,8 +66,10 @@ export default function ActiveWorkout() {
 
     if (currentSet < currentExercise.sets) {
       // More sets to do, start rest
+      const rest = currentExercise.rest || workout?.default_rest || 90;
+      setMaxRestTime(rest);
+      setRestTime(rest);
       setIsResting(true);
-      setRestTime(currentExercise.rest || 90);
       setCurrentSet(currentSet + 1);
     } else {
       // All sets done for this exercise
@@ -75,40 +77,42 @@ export default function ActiveWorkout() {
         // Move to next exercise
         setCurrentExerciseIndex(currentExerciseIndex + 1);
         setCurrentSet(1);
+        const nextExercise = exercises[currentExerciseIndex + 1];
+        const rest = nextExercise?.rest || workout?.default_rest || 90;
+        setMaxRestTime(rest);
+        setRestTime(rest);
         setIsResting(true);
-        setRestTime(exercises[currentExerciseIndex + 1]?.rest || 90);
       } else {
         // Workout complete!
         navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
       }
     }
-  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, exercises, navigate, workoutId]);
+  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, exercises, navigate, workoutId, workout]);
 
   const handleSkipRest = () => {
     setIsResting(false);
     setRestTime(0);
   };
 
-  const handlePrevExercise = () => {
-    if (currentExerciseIndex > 0) {
-      setCurrentExerciseIndex(currentExerciseIndex - 1);
-      setCurrentSet(1);
-      setIsResting(false);
-    }
-  };
-
-  const handleNextExercise = () => {
-    if (currentExerciseIndex < exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-      setCurrentSet(1);
-      setIsResting(false);
-    }
+  const handleExerciseClick = (index) => {
+    setCurrentExerciseIndex(index);
+    setCurrentSet(1);
+    setIsResting(false);
+    setRestTime(0);
   };
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getCompletedSetsCount = (exerciseId) => {
+    return completedSets[exerciseId]?.length || 0;
+  };
+
+  const isExerciseComplete = (exercise) => {
+    return getCompletedSetsCount(exercise.id) >= exercise.sets;
   };
 
   if (isLoading) {
@@ -132,12 +136,12 @@ export default function ActiveWorkout() {
     );
   }
 
-  const completedSetsForExercise = completedSets[currentExercise.id]?.length || 0;
+  const isLastTenSeconds = restTime <= 10 && restTime > 0;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-slate-900 text-white pb-32">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+      <header className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to={createPageUrl(`WorkoutDetail?id=${workoutId}`)}>
@@ -148,192 +152,230 @@ export default function ActiveWorkout() {
             
             <div className="text-center">
               <p className="text-sm text-slate-400">{workout.name}</p>
-              <p className="text-xs text-slate-500">{completedTotal} / {totalSets} sets</p>
+              <p className="text-xs text-slate-500">{completedTotal} / {totalSets} sets completed</p>
             </div>
             
             <div className="w-10" />
           </div>
           
-          <Progress value={progress} className="mt-3 h-1 bg-slate-800" />
+          <Progress value={progress} className="mt-3 h-1.5 bg-slate-800" />
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-8">
-        <AnimatePresence mode="wait">
-          {isResting ? (
-            <motion.div
-              key="rest"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center"
+      {/* Rest Timer - Floating */}
+      <AnimatePresence>
+        {isResting && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="sticky top-[85px] z-10 px-4 py-3"
+          >
+            <div 
+              className={`max-w-2xl mx-auto rounded-2xl p-4 transition-colors duration-300 ${
+                isLastTenSeconds 
+                  ? 'bg-red-600 animate-pulse' 
+                  : 'bg-slate-800 border border-slate-700'
+              }`}
             >
-              <p className="text-slate-400 uppercase tracking-wider text-sm mb-4">Rest Time</p>
-              
-              <div className="relative w-48 h-48 mx-auto mb-8">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="88"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    className="text-slate-800"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="88"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeLinecap="round"
-                    className="text-white"
-                    style={{
-                      strokeDasharray: 553,
-                      strokeDashoffset: 553 - (553 * (restTime / (currentExercise.rest || 90)))
-                    }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-5xl font-bold font-mono">{formatTime(restTime)}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 h-14">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="24"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                        className={isLastTenSeconds ? "text-red-400" : "text-slate-700"}
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="24"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                        className="text-white"
+                        style={{
+                          strokeDasharray: 150.8,
+                          strokeDashoffset: 150.8 - (150.8 * (restTime / maxRestTime))
+                        }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className={`text-lg font-bold font-mono ${isLastTenSeconds ? 'text-white' : ''}`}>
+                        {restTime}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className={`text-sm ${isLastTenSeconds ? 'text-red-100' : 'text-slate-400'}`}>
+                      Rest Time
+                    </p>
+                    <p className="text-white font-medium">
+                      Next: {currentExercise.name} - Set {currentSet}
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              <p className="text-slate-400 mb-2">Next up:</p>
-              <p className="text-xl font-semibold mb-8">
-                {currentExercise.name} - Set {currentSet}
-              </p>
-
-              <div className="flex justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-slate-700 text-white hover:bg-slate-800"
-                  onClick={() => setIsPaused(!isPaused)}
-                >
-                  {isPaused ? <Play className="w-5 h-5 mr-2" /> : <Pause className="w-5 h-5 mr-2" />}
-                  {isPaused ? 'Resume' : 'Pause'}
-                </Button>
                 
                 <Button
-                  size="lg"
-                  className="bg-white text-slate-900 hover:bg-slate-100"
+                  size="sm"
+                  variant={isLastTenSeconds ? "secondary" : "outline"}
+                  className={isLastTenSeconds 
+                    ? "bg-white text-red-600 hover:bg-red-50" 
+                    : "border-slate-600 text-white hover:bg-slate-700"
+                  }
                   onClick={handleSkipRest}
                 >
-                  <SkipForward className="w-5 h-5 mr-2" />
-                  Skip Rest
+                  <SkipForward className="w-4 h-4 mr-1" />
+                  Skip
                 </Button>
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="exercise"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-            >
-              {/* Exercise Navigation */}
-              <div className="flex items-center justify-between mb-6">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-slate-400 hover:text-white hover:bg-slate-800"
-                  onClick={handlePrevExercise}
-                  disabled={currentExerciseIndex === 0}
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </Button>
-                
-                <span className="text-sm text-slate-400">
-                  Exercise {currentExerciseIndex + 1} of {exercises.length}
-                </span>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-slate-400 hover:text-white hover:bg-slate-800"
-                  onClick={handleNextExercise}
-                  disabled={currentExerciseIndex === exercises.length - 1}
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </Button>
-              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              {/* Current Exercise */}
-              <Card className="bg-slate-800 border-slate-700 p-6 mb-6">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    {currentExercise.name}
-                  </h2>
+      {/* Exercise List */}
+      <main className="max-w-2xl mx-auto px-4 py-6">
+        <div className="space-y-3">
+          {exercises.map((exercise, index) => {
+            const isActive = index === currentExerciseIndex;
+            const isComplete = isExerciseComplete(exercise);
+            const completedCount = getCompletedSetsCount(exercise.id);
+            
+            return (
+              <motion.div
+                key={exercise.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card 
+                  className={`relative overflow-hidden transition-all duration-300 cursor-pointer ${
+                    isActive 
+                      ? 'bg-slate-800 border-2 border-white ring-4 ring-white/20' 
+                      : isComplete
+                      ? 'bg-slate-800/50 border-slate-700 opacity-60'
+                      : 'bg-slate-800/80 border-slate-700 hover:border-slate-600'
+                  }`}
+                  onClick={() => handleExerciseClick(index)}
+                >
+                  {/* Color indicator */}
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 w-1"
+                    style={{ backgroundColor: isComplete ? '#22c55e' : (workout.color || '#6366f1') }}
+                  />
                   
-                  <div className="flex justify-center gap-3 mb-6">
-                    <Badge className="bg-white text-slate-900 text-lg px-4 py-1">
-                      {currentExercise.sets} × {currentExercise.reps}
-                    </Badge>
-                    
-                    {currentExercise.rest && (
-                      <Badge variant="outline" className="text-slate-300 border-slate-600 text-lg px-4 py-1">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {currentExercise.rest}s
-                      </Badge>
-                    )}
-                    
-                    {currentExercise.weight > 0 && (
-                      <Badge variant="outline" className="text-slate-300 border-slate-600 text-lg px-4 py-1">
-                        <Weight className="w-4 h-4 mr-1" />
-                        {currentExercise.weight}kg
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {currentExercise.notes && (
-                    <p className="text-slate-400 mb-6">💡 {currentExercise.notes}</p>
-                  )}
-
-                  {/* Set Indicators */}
-                  <div className="flex justify-center gap-2 mb-8">
-                    {Array.from({ length: currentExercise.sets }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold transition-all ${
-                          completedSetsForExercise > i
-                            ? 'bg-green-500 text-white'
-                            : currentSet === i + 1
-                            ? 'bg-white text-slate-900 ring-4 ring-white/30'
-                            : 'bg-slate-700 text-slate-400'
-                        }`}
-                      >
-                        {completedSetsForExercise > i ? (
-                          <Check className="w-5 h-5" />
-                        ) : (
-                          i + 1
+                  <div className="p-4 pl-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                            isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-slate-400'
+                          }`}>
+                            #{index + 1}
+                          </span>
+                          <h4 className={`font-semibold truncate ${
+                            isComplete ? 'text-slate-400 line-through' : 'text-white'
+                          }`}>
+                            {exercise.name}
+                          </h4>
+                          {isComplete && (
+                            <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className={`${
+                            isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
+                          }`}>
+                            {exercise.sets} × {exercise.reps}
+                          </Badge>
+                          
+                          {exercise.rest && (
+                            <Badge variant="outline" className="text-slate-400 border-slate-600">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {exercise.rest}s
+                            </Badge>
+                          )}
+                          
+                          {exercise.weight > 0 && (
+                            <Badge variant="outline" className="text-slate-400 border-slate-600">
+                              <Weight className="w-3 h-3 mr-1" />
+                              {exercise.weight}kg
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {exercise.notes && (
+                          <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" />
+                            {exercise.notes}
+                          </p>
                         )}
                       </div>
-                    ))}
+                      
+                      {/* Set indicators */}
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        {Array.from({ length: exercise.sets }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                              completedCount > i
+                                ? 'bg-green-500 text-white'
+                                : isActive && currentSet === i + 1
+                                ? 'bg-white text-slate-900 ring-2 ring-white/50'
+                                : 'bg-slate-700 text-slate-400'
+                            }`}
+                          >
+                            {completedCount > i ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              i + 1
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-
-                  <p className="text-slate-400 mb-4">
-                    Set {currentSet} of {currentExercise.sets}
-                  </p>
-                </div>
-              </Card>
-
-              {/* Complete Set Button */}
-              <Button
-                size="lg"
-                className="w-full h-16 text-xl bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
-                onClick={handleCompleteSet}
-              >
-                <Check className="w-6 h-6 mr-2" />
-                Complete Set
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
       </main>
+
+      {/* Sticky Bottom Action */}
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-4 z-20">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm text-slate-400">Current Exercise</p>
+              <p className="text-white font-semibold">{currentExercise.name}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-slate-400">Set</p>
+              <p className="text-white font-semibold">{currentSet} of {currentExercise.sets}</p>
+            </div>
+          </div>
+          
+          <Button
+            size="lg"
+            className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
+            onClick={handleCompleteSet}
+            disabled={isResting}
+          >
+            <Check className="w-5 h-5 mr-2" />
+            Complete Set {currentSet}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

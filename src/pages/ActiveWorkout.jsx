@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
   ArrowLeft, Loader2, Check, SkipForward, 
-  Clock, Weight, MessageSquare, X
+  Clock, Weight, MessageSquare, Pencil, X, Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -17,6 +18,7 @@ export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
   const workoutId = urlParams.get('id');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
@@ -24,6 +26,10 @@ export default function ActiveWorkout() {
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(0);
   const [maxRestTime, setMaxRestTime] = useState(0);
+  const [isExerciseRest, setIsExerciseRest] = useState(false);
+  const [editingExerciseId, setEditingExerciseId] = useState(null);
+  const [editData, setEditData] = useState(null);
+  const [localExercises, setLocalExercises] = useState([]);
 
   const { data: workout, isLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -34,7 +40,20 @@ export default function ActiveWorkout() {
     enabled: !!workoutId
   });
 
-  const exercises = workout?.exercises || [];
+  useEffect(() => {
+    if (workout?.exercises) {
+      setLocalExercises(workout.exercises);
+    }
+  }, [workout]);
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.Workout.update(workoutId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workout', workoutId] });
+    }
+  });
+
+  const exercises = localExercises;
   const currentExercise = exercises[currentExerciseIndex];
   
   const totalSets = exercises.reduce((acc, ex) => acc + (ex.sets || 0), 0);
@@ -50,6 +69,7 @@ export default function ActiveWorkout() {
       }, 1000);
     } else if (restTime === 0 && isResting) {
       setIsResting(false);
+      setIsExerciseRest(false);
     }
     return () => clearInterval(interval);
   }, [isResting, restTime]);
@@ -65,23 +85,24 @@ export default function ActiveWorkout() {
     setCompletedSets(newCompletedSets);
 
     if (currentSet < currentExercise.sets) {
-      // More sets to do, start rest
+      // More sets to do, start rest between sets
       const rest = currentExercise.rest || workout?.default_rest || 90;
       setMaxRestTime(rest);
       setRestTime(rest);
       setIsResting(true);
+      setIsExerciseRest(false);
       setCurrentSet(currentSet + 1);
     } else {
       // All sets done for this exercise
       if (currentExerciseIndex < exercises.length - 1) {
-        // Move to next exercise
+        // Move to next exercise - use rest between exercises
         setCurrentExerciseIndex(currentExerciseIndex + 1);
         setCurrentSet(1);
-        const nextExercise = exercises[currentExerciseIndex + 1];
-        const rest = nextExercise?.rest || workout?.default_rest || 90;
+        const rest = workout?.rest_between_exercises || 120;
         setMaxRestTime(rest);
         setRestTime(rest);
         setIsResting(true);
+        setIsExerciseRest(true);
       } else {
         // Workout complete!
         navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
@@ -92,13 +113,39 @@ export default function ActiveWorkout() {
   const handleSkipRest = () => {
     setIsResting(false);
     setRestTime(0);
+    setIsExerciseRest(false);
   };
 
   const handleExerciseClick = (index) => {
+    if (editingExerciseId) return;
     setCurrentExerciseIndex(index);
     setCurrentSet(1);
     setIsResting(false);
     setRestTime(0);
+    setIsExerciseRest(false);
+  };
+
+  const handleStartEdit = (exercise, e) => {
+    e.stopPropagation();
+    setEditingExerciseId(exercise.id);
+    setEditData({ ...exercise });
+  };
+
+  const handleSaveEdit = (e) => {
+    e.stopPropagation();
+    const newExercises = localExercises.map(ex => 
+      ex.id === editingExerciseId ? editData : ex
+    );
+    setLocalExercises(newExercises);
+    updateMutation.mutate({ exercises: newExercises });
+    setEditingExerciseId(null);
+    setEditData(null);
+  };
+
+  const handleCancelEdit = (e) => {
+    e.stopPropagation();
+    setEditingExerciseId(null);
+    setEditData(null);
   };
 
   const formatTime = (seconds) => {
@@ -169,55 +216,55 @@ export default function ActiveWorkout() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="sticky top-[85px] z-10 px-4 py-3"
+            className="sticky top-[85px] z-10 px-4 pt-3"
           >
             <div 
               className={`max-w-2xl mx-auto rounded-2xl p-4 transition-colors duration-300 ${
                 isLastTenSeconds 
-                  ? 'bg-red-600 animate-pulse' 
+                  ? 'bg-red-600' 
                   : 'bg-slate-800 border border-slate-700'
-              }`}
+              } ${isLastTenSeconds ? 'animate-pulse' : ''}`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-14 h-14">
-                    <svg className="w-full h-full transform -rotate-90">
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 64 64">
                       <circle
-                        cx="28"
-                        cy="28"
-                        r="24"
+                        cx="32"
+                        cy="32"
+                        r="28"
                         stroke="currentColor"
                         strokeWidth="4"
                         fill="none"
                         className={isLastTenSeconds ? "text-red-400" : "text-slate-700"}
                       />
                       <circle
-                        cx="28"
-                        cy="28"
-                        r="24"
+                        cx="32"
+                        cy="32"
+                        r="28"
                         stroke="currentColor"
                         strokeWidth="4"
                         fill="none"
                         strokeLinecap="round"
                         className="text-white"
                         style={{
-                          strokeDasharray: 150.8,
-                          strokeDashoffset: 150.8 - (150.8 * (restTime / maxRestTime))
+                          strokeDasharray: 175.93,
+                          strokeDashoffset: 175.93 - (175.93 * (restTime / maxRestTime))
                         }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-lg font-bold font-mono ${isLastTenSeconds ? 'text-white' : ''}`}>
+                      <span className="text-lg font-bold font-mono text-white">
                         {restTime}
                       </span>
                     </div>
                   </div>
                   
-                  <div>
+                  <div className="min-w-0">
                     <p className={`text-sm ${isLastTenSeconds ? 'text-red-100' : 'text-slate-400'}`}>
-                      Rest Time
+                      {isExerciseRest ? 'Rest Between Exercises' : 'Rest Between Sets'}
                     </p>
-                    <p className="text-white font-medium">
+                    <p className="text-white font-medium truncate">
                       Next: {currentExercise.name} - Set {currentSet}
                     </p>
                   </div>
@@ -225,10 +272,9 @@ export default function ActiveWorkout() {
                 
                 <Button
                   size="sm"
-                  variant={isLastTenSeconds ? "secondary" : "outline"}
                   className={isLastTenSeconds 
-                    ? "bg-white text-red-600 hover:bg-red-50" 
-                    : "border-slate-600 text-white hover:bg-slate-700"
+                    ? "bg-white text-red-600 hover:bg-red-50 flex-shrink-0" 
+                    : "bg-slate-700 text-white hover:bg-slate-600 flex-shrink-0"
                   }
                   onClick={handleSkipRest}
                 >
@@ -248,6 +294,7 @@ export default function ActiveWorkout() {
             const isActive = index === currentExerciseIndex;
             const isComplete = isExerciseComplete(exercise);
             const completedCount = getCompletedSetsCount(exercise.id);
+            const isEditing = editingExerciseId === exercise.id;
             
             return (
               <motion.div
@@ -257,14 +304,16 @@ export default function ActiveWorkout() {
                 transition={{ delay: index * 0.05 }}
               >
                 <Card 
-                  className={`relative overflow-hidden transition-all duration-300 cursor-pointer ${
-                    isActive 
-                      ? 'bg-slate-800 border-2 border-white ring-4 ring-white/20' 
+                  className={`relative overflow-hidden transition-all duration-300 ${
+                    isEditing
+                      ? 'bg-slate-700 border-2 border-blue-500'
+                      : isActive 
+                      ? 'bg-slate-800 border-2 border-white ring-4 ring-white/20 cursor-pointer' 
                       : isComplete
-                      ? 'bg-slate-800/50 border-slate-700 opacity-60'
-                      : 'bg-slate-800/80 border-slate-700 hover:border-slate-600'
+                      ? 'bg-slate-800/50 border-slate-700 opacity-60 cursor-pointer'
+                      : 'bg-slate-800/80 border-slate-700 hover:border-slate-600 cursor-pointer'
                   }`}
-                  onClick={() => handleExerciseClick(index)}
+                  onClick={() => !isEditing && handleExerciseClick(index)}
                 >
                   {/* Color indicator */}
                   <div 
@@ -273,76 +322,172 @@ export default function ActiveWorkout() {
                   />
                   
                   <div className="p-4 pl-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                            isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-slate-400'
-                          }`}>
+                    {isEditing ? (
+                      // Edit Mode
+                      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500 text-white">
                             #{index + 1}
                           </span>
-                          <h4 className={`font-semibold truncate ${
-                            isComplete ? 'text-slate-400 line-through' : 'text-white'
-                          }`}>
-                            {exercise.name}
-                          </h4>
-                          {isComplete && (
-                            <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          )}
+                          <Input
+                            value={editData.name}
+                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                            className="bg-slate-600 border-slate-500 text-white h-8"
+                            placeholder="Exercise name"
+                          />
                         </div>
                         
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge className={`${
-                            isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
-                          }`}>
-                            {exercise.sets} × {exercise.reps}
-                          </Badge>
-                          
-                          {exercise.rest && (
-                            <Badge variant="outline" className="text-slate-400 border-slate-600">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {exercise.rest}s
-                            </Badge>
-                          )}
-                          
-                          {exercise.weight > 0 && (
-                            <Badge variant="outline" className="text-slate-400 border-slate-600">
-                              <Weight className="w-3 h-3 mr-1" />
-                              {exercise.weight}kg
-                            </Badge>
-                          )}
+                        <div className="grid grid-cols-4 gap-2">
+                          <div>
+                            <label className="text-xs text-slate-400 block mb-1">Sets</label>
+                            <Input
+                              type="number"
+                              value={editData.sets}
+                              onChange={(e) => setEditData({ ...editData, sets: parseInt(e.target.value) || 0 })}
+                              className="bg-slate-600 border-slate-500 text-white h-8"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-400 block mb-1">Reps</label>
+                            <Input
+                              value={editData.reps}
+                              onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
+                              className="bg-slate-600 border-slate-500 text-white h-8"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-400 block mb-1">Rest (s)</label>
+                            <Input
+                              type="number"
+                              value={editData.rest || ''}
+                              onChange={(e) => setEditData({ ...editData, rest: parseInt(e.target.value) || 0 })}
+                              className="bg-slate-600 border-slate-500 text-white h-8"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-400 block mb-1">Weight</label>
+                            <Input
+                              type="number"
+                              value={editData.weight || ''}
+                              onChange={(e) => setEditData({ ...editData, weight: parseFloat(e.target.value) || 0 })}
+                              className="bg-slate-600 border-slate-500 text-white h-8"
+                            />
+                          </div>
                         </div>
                         
-                        {exercise.notes && (
-                          <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3" />
-                            {exercise.notes}
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Set indicators */}
-                      <div className="flex gap-1.5 flex-shrink-0">
-                        {Array.from({ length: exercise.sets }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                              completedCount > i
-                                ? 'bg-green-500 text-white'
-                                : isActive && currentSet === i + 1
-                                ? 'bg-white text-slate-900 ring-2 ring-white/50'
-                                : 'bg-slate-700 text-slate-400'
-                            }`}
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Notes</label>
+                          <Input
+                            value={editData.notes || ''}
+                            onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                            className="bg-slate-600 border-slate-500 text-white h-8"
+                            placeholder="Optional notes"
+                          />
+                        </div>
+                        
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-slate-300 hover:text-white hover:bg-slate-600"
+                            onClick={handleCancelEdit}
                           >
-                            {completedCount > i ? (
-                              <Check className="w-4 h-4" />
-                            ) : (
-                              i + 1
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                            onClick={handleSaveEdit}
+                          >
+                            <Save className="w-4 h-4 mr-1" />
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      // View Mode
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                              isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-slate-400'
+                            }`}>
+                              #{index + 1}
+                            </span>
+                            <h4 className={`font-semibold truncate ${
+                              isComplete ? 'text-slate-400 line-through' : 'text-white'
+                            }`}>
+                              {exercise.name}
+                            </h4>
+                            {isComplete && (
+                              <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                             )}
                           </div>
-                        ))}
+                          
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className={`${
+                              isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
+                            }`}>
+                              {exercise.sets} × {exercise.reps}
+                            </Badge>
+                            
+                            {exercise.rest && (
+                              <Badge variant="outline" className="text-slate-400 border-slate-600">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {exercise.rest}s
+                              </Badge>
+                            )}
+                            
+                            {exercise.weight > 0 && (
+                              <Badge variant="outline" className="text-slate-400 border-slate-600">
+                                <Weight className="w-3 h-3 mr-1" />
+                                {exercise.weight}kg
+                              </Badge>
+                            )}
+                            
+                            {/* Edit button */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-slate-400 hover:text-white hover:bg-slate-700"
+                              onClick={(e) => handleStartEdit(exercise, e)}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          
+                          {exercise.notes && (
+                            <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3" />
+                              {exercise.notes}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Set indicators */}
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {Array.from({ length: exercise.sets }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                                completedCount > i
+                                  ? 'bg-green-500 text-white'
+                                  : isActive && currentSet === i + 1
+                                  ? 'bg-white text-slate-900 ring-2 ring-white/50'
+                                  : 'bg-slate-700 text-slate-400'
+                              }`}
+                            >
+                              {completedCount > i ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                i + 1
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </Card>
               </motion.div>

@@ -22,6 +22,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
     name: '',
     description: '',
     default_rest: 90,
+    rest_between_exercises: 120,
     color: '#6366f1'
   });
 
@@ -31,6 +32,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
         name: workout.name || '',
         description: workout.description || '',
         default_rest: workout.default_rest || 90,
+        rest_between_exercises: workout.rest_between_exercises || 120,
         color: workout.color || '#6366f1'
       });
     }
@@ -77,15 +79,27 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
             />
           </div>
           
-          <div>
-            <Label htmlFor="rest">Default Rest Time (seconds)</Label>
-            <Input
-              id="rest"
-              type="number"
-              value={data.default_rest}
-              onChange={(e) => setData({ ...data, default_rest: parseInt(e.target.value) || 90 })}
-              className="mt-1"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="rest">Rest Between Sets (s)</Label>
+              <Input
+                id="rest"
+                type="number"
+                value={data.default_rest}
+                onChange={(e) => setData({ ...data, default_rest: parseInt(e.target.value) || 90 })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rest_exercises">Rest Between Exercises (s)</Label>
+              <Input
+                id="rest_exercises"
+                type="number"
+                value={data.rest_between_exercises}
+                onChange={(e) => setData({ ...data, rest_between_exercises: parseInt(e.target.value) || 120 })}
+                className="mt-1"
+              />
+            </div>
           </div>
           
           <div>

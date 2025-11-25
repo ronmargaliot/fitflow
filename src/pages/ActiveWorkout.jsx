@@ -225,51 +225,52 @@ export default function ActiveWorkout() {
                   : 'bg-slate-800 border border-slate-700'
               } ${isLastTenSeconds ? 'animate-pulse' : ''}`}
             >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 64 64">
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="28"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                        className={isLastTenSeconds ? "text-red-400" : "text-slate-700"}
-                      />
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="28"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                        strokeLinecap="round"
-                        className="text-white"
-                        style={{
-                          strokeDasharray: 175.93,
-                          strokeDashoffset: 175.93 - (175.93 * (restTime / maxRestTime))
-                        }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg font-bold font-mono text-white">
-                        {restTime}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="min-w-0">
-                    <p className={`text-sm ${isLastTenSeconds ? 'text-red-100' : 'text-slate-400'}`}>
-                      {isExerciseRest ? 'Rest Between Exercises' : 'Rest Between Sets'}
-                    </p>
-                    <p className="text-white font-medium truncate">
-                      Next: {currentExercise.name} - Set {currentSet}
-                    </p>
+              <div className="flex items-center gap-3">
+                {/* Timer circle */}
+                <div className="relative w-14 h-14 flex-shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="24"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      className={isLastTenSeconds ? "text-red-400" : "text-slate-700"}
+                    />
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="24"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeLinecap="round"
+                      className="text-white"
+                      style={{
+                        strokeDasharray: 150.8,
+                        strokeDashoffset: 150.8 - (150.8 * (restTime / maxRestTime))
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-base font-bold font-mono text-white">
+                      {restTime}
+                    </span>
                   </div>
                 </div>
                 
+                {/* Text content */}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs ${isLastTenSeconds ? 'text-red-100' : 'text-slate-400'}`}>
+                    {isExerciseRest ? 'Rest Between Exercises' : 'Rest Between Sets'}
+                  </p>
+                  <p className="text-white text-sm font-medium truncate">
+                    Next: {currentExercise.name} - Set {currentSet}
+                  </p>
+                </div>
+                
+                {/* Skip button */}
                 <Button
                   size="sm"
                   className={isLastTenSeconds 
@@ -278,8 +279,8 @@ export default function ActiveWorkout() {
                   }
                   onClick={handleSkipRest}
                 >
-                  <SkipForward className="w-4 h-4 mr-1" />
-                  Skip
+                  <SkipForward className="w-4 h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Skip</span>
                 </Button>
               </div>
             </div>

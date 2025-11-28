@@ -8,11 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
   ArrowLeft, Loader2, Check, SkipForward, 
-  Clock, Weight, MessageSquare, Pencil, X, Save
+  Clock, Weight, MessageSquare, Pencil, X, Save,
+  Timer, Flag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -30,6 +41,11 @@ export default function ActiveWorkout() {
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [editData, setEditData] = useState(null);
   const [localExercises, setLocalExercises] = useState([]);
+  
+  // Workout timer state
+  const [startTime] = useState(new Date());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [showFinishDialog, setShowFinishDialog] = useState(false);
 
   const { data: workout, isLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -46,10 +62,25 @@ export default function ActiveWorkout() {
     }
   }, [workout]);
 
+  // Total workout timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedTime(Math.floor((new Date() - startTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Workout.update(workoutId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workout', workoutId] });
+    }
+  });
+
+  const createSessionMutation = useMutation({
+    mutationFn: (data) => base44.entities.WorkoutSession.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
     }
   });
 
@@ -74,6 +105,64 @@ export default function ActiveWorkout() {
     return () => clearInterval(interval);
   }, [isResting, restTime]);
 
+  const formatElapsedTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const calculateSessionStats = useCallback(() => {
+    let totalVolume = 0;
+    let totalReps = 0;
+    const exercisesCompleted = [];
+
+    exercises.forEach(ex => {
+      const setsCompleted = completedSets[ex.id]?.length || 0;
+      const repsPerSet = parseInt(ex.reps) || 0;
+      const weight = ex.weight || 0;
+      
+      totalReps += setsCompleted * repsPerSet;
+      totalVolume += setsCompleted * repsPerSet * weight;
+      
+      if (setsCompleted > 0) {
+        exercisesCompleted.push({
+          name: ex.name,
+          sets_completed: setsCompleted,
+          total_sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight || 0
+        });
+      }
+    });
+
+    return { totalVolume, totalReps, exercisesCompleted };
+  }, [exercises, completedSets]);
+
+  const handleFinishWorkout = async () => {
+    const { totalVolume, totalReps, exercisesCompleted } = calculateSessionStats();
+    const finishedAt = new Date();
+    
+    await createSessionMutation.mutateAsync({
+      workout_id: workoutId,
+      workout_name: workout.name,
+      started_at: startTime.toISOString(),
+      finished_at: finishedAt.toISOString(),
+      duration_seconds: elapsedTime,
+      completed_sets: completedTotal,
+      total_sets: totalSets,
+      total_volume: totalVolume,
+      total_reps: totalReps,
+      exercises_completed: exercisesCompleted,
+      is_complete: completedTotal >= totalSets
+    });
+
+    navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
+  };
+
   const handleCompleteSet = useCallback(() => {
     const exerciseId = currentExercise.id;
     const newCompletedSets = { ...completedSets };
@@ -85,7 +174,6 @@ export default function ActiveWorkout() {
     setCompletedSets(newCompletedSets);
 
     if (currentSet < currentExercise.sets) {
-      // More sets to do, start rest between sets
       const rest = currentExercise.rest || workout?.default_rest || 90;
       setMaxRestTime(rest);
       setRestTime(rest);
@@ -93,9 +181,7 @@ export default function ActiveWorkout() {
       setIsExerciseRest(false);
       setCurrentSet(currentSet + 1);
     } else {
-      // All sets done for this exercise
       if (currentExerciseIndex < exercises.length - 1) {
-        // Move to next exercise - use rest between exercises
         setCurrentExerciseIndex(currentExerciseIndex + 1);
         setCurrentSet(1);
         const rest = workout?.rest_between_exercises || 120;
@@ -104,11 +190,11 @@ export default function ActiveWorkout() {
         setIsResting(true);
         setIsExerciseRest(true);
       } else {
-        // Workout complete!
-        navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
+        // All exercises complete - auto finish
+        setShowFinishDialog(true);
       }
     }
-  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, exercises, navigate, workoutId, workout]);
+  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, exercises, workout]);
 
   const handleSkipRest = () => {
     setIsResting(false);
@@ -148,12 +234,6 @@ export default function ActiveWorkout() {
     setEditData(null);
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const getCompletedSetsCount = (exerciseId) => {
     return completedSets[exerciseId]?.length || 0;
   };
@@ -186,10 +266,10 @@ export default function ActiveWorkout() {
   const isLastTenSeconds = restTime <= 10 && restTime > 0;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white pb-32">
+    <div className="min-h-screen bg-slate-900 text-white pb-40">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur border-b border-slate-800">
-        <div className="max-w-2xl mx-auto px-4 py-4">
+        <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link to={createPageUrl(`WorkoutDetail?id=${workoutId}`)}>
               <Button variant="ghost" size="icon" className="rounded-full text-white hover:bg-slate-800">
@@ -197,12 +277,28 @@ export default function ActiveWorkout() {
               </Button>
             </Link>
             
-            <div className="text-center">
+            <div className="text-center flex-1">
               <p className="text-sm text-slate-400">{workout.name}</p>
-              <p className="text-xs text-slate-500">{completedTotal} / {totalSets} sets completed</p>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <Badge className="bg-green-600 text-white">
+                  <Timer className="w-3 h-3 mr-1" />
+                  {formatElapsedTime(elapsedTime)}
+                </Badge>
+                <Badge variant="outline" className="border-slate-600 text-slate-400">
+                  {completedTotal}/{totalSets} sets
+                </Badge>
+              </div>
             </div>
             
-            <div className="w-10" />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
+              onClick={() => setShowFinishDialog(true)}
+            >
+              <Flag className="w-4 h-4 mr-1" />
+              Finish
+            </Button>
           </div>
           
           <Progress value={progress} className="mt-3 h-1.5 bg-slate-800" />
@@ -216,7 +312,7 @@ export default function ActiveWorkout() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="sticky top-[85px] z-10 px-4 pt-3"
+            className="sticky top-[100px] z-10 px-4 pt-3"
           >
             <div 
               className={`max-w-2xl mx-auto rounded-2xl p-4 transition-colors duration-300 ${
@@ -226,7 +322,6 @@ export default function ActiveWorkout() {
               } ${isLastTenSeconds ? 'animate-pulse' : ''}`}
             >
               <div className="flex items-center gap-3">
-                {/* Timer circle */}
                 <div className="relative w-14 h-14 flex-shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
                     <circle
@@ -260,7 +355,6 @@ export default function ActiveWorkout() {
                   </div>
                 </div>
                 
-                {/* Text content */}
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs ${isLastTenSeconds ? 'text-red-100' : 'text-slate-400'}`}>
                     {isExerciseRest ? 'Rest Between Exercises' : 'Rest Between Sets'}
@@ -270,7 +364,6 @@ export default function ActiveWorkout() {
                   </p>
                 </div>
                 
-                {/* Skip button */}
                 <Button
                   size="sm"
                   className={isLastTenSeconds 
@@ -316,7 +409,6 @@ export default function ActiveWorkout() {
                   }`}
                   onClick={() => !isEditing && handleExerciseClick(index)}
                 >
-                  {/* Color indicator */}
                   <div 
                     className="absolute left-0 top-0 bottom-0 w-1"
                     style={{ backgroundColor: isComplete ? '#22c55e' : (workout.color || '#6366f1') }}
@@ -324,7 +416,6 @@ export default function ActiveWorkout() {
                   
                   <div className="p-4 pl-5">
                     {isEditing ? (
-                      // Edit Mode
                       <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500 text-white">
@@ -407,7 +498,6 @@ export default function ActiveWorkout() {
                         </div>
                       </div>
                     ) : (
-                      // View Mode
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
@@ -447,7 +537,6 @@ export default function ActiveWorkout() {
                               </Badge>
                             )}
                             
-                            {/* Edit button */}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -466,7 +555,6 @@ export default function ActiveWorkout() {
                           )}
                         </div>
                         
-                        {/* Set indicators */}
                         <div className="flex gap-1.5 flex-shrink-0">
                           {Array.from({ length: exercise.sets }).map((_, i) => (
                             <div
@@ -522,6 +610,31 @@ export default function ActiveWorkout() {
           </Button>
         </div>
       </div>
+
+      {/* Finish Workout Dialog */}
+      <AlertDialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
+        <AlertDialogContent className="bg-slate-800 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Finish Workout?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              You've completed {completedTotal} of {totalSets} sets in {formatElapsedTime(elapsedTime)}.
+              {completedTotal < totalSets && " Some sets are incomplete."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600">
+              Continue Workout
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleFinishWorkout}
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Finish Workout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

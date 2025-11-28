@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, Plus, Loader2, Settings, Trash2,
-  Play, MoreVertical
+  Play, MoreVertical, Lock, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -41,6 +42,15 @@ export default function WorkoutDetail() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [exercises, setExercises] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const user = await base44.auth.me();
+      setCurrentUser(user);
+    };
+    loadUser();
+  }, []);
 
   const { data: workout, isLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -128,6 +138,8 @@ export default function WorkoutDetail() {
     );
   }
 
+  const isOwner = workout.created_by === currentUser?.email;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Header */}
@@ -141,15 +153,21 @@ export default function WorkoutDetail() {
                 </Button>
               </Link>
               <div>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: workout.color || '#6366f1' }}
-                  />
-                  <h1 className="text-xl font-bold text-slate-900">{workout.name}</h1>
-                </div>
-                <p className="text-xs text-slate-500">{exercises.length} exercises</p>
-              </div>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: workout.color || '#6366f1' }}
+                      />
+                      <h1 className="text-xl font-bold text-slate-900">{workout.name}</h1>
+                      {!isOwner && (
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                          <Users className="w-3 h-3 mr-1" />
+                          Community
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">{exercises.length} exercises</p>
+                  </div>
             </div>
             
             <div className="flex items-center gap-2">
@@ -159,28 +177,34 @@ export default function WorkoutDetail() {
                   Start
                 </Button>
               </Link>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <MoreVertical className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                    <Settings className="w-4 h-4 mr-2" />
-                    Edit Workout
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-red-600"
-                    onClick={() => setShowDeleteDialog(true)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Workout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+
+              {isOwner ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Edit Workout
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="text-red-600"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Workout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="ghost" size="icon" className="rounded-full" disabled>
+                  <Lock className="w-5 h-5 text-slate-400" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -211,10 +235,11 @@ export default function WorkoutDetail() {
                           <ExerciseItem
                             exercise={exercise}
                             index={index}
-                            onUpdate={(updated) => handleUpdateExercise(index, updated)}
-                            onDelete={() => handleDeleteExercise(index)}
-                            dragHandleProps={provided.dragHandleProps}
+                            onUpdate={isOwner ? (updated) => handleUpdateExercise(index, updated) : null}
+                            onDelete={isOwner ? () => handleDeleteExercise(index) : null}
+                            dragHandleProps={isOwner ? provided.dragHandleProps : null}
                             workoutColor={workout.color}
+                            readOnly={!isOwner}
                           />
                         </div>
                       )}
@@ -227,20 +252,22 @@ export default function WorkoutDetail() {
           </Droppable>
         </DragDropContext>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mt-6"
-        >
-          <Button
-            variant="outline"
-            className="w-full border-dashed border-2 h-14"
-            onClick={() => setShowAddModal(true)}
+        {isOwner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-6"
           >
-            <Plus className="w-5 h-5 mr-2" />
-            Add Exercise
-          </Button>
-        </motion.div>
+            <Button
+              variant="outline"
+              className="w-full border-dashed border-2 h-14"
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Add Exercise
+            </Button>
+          </motion.div>
+        )}
       </main>
 
       <AddExerciseModal

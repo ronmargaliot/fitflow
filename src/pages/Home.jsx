@@ -31,9 +31,7 @@ export default function Home() {
 
   // Filter workouts based on tab
   const myWorkouts = allWorkouts.filter(w => w.created_by === currentUser?.email);
-  const communityWorkouts = allWorkouts.filter(w => 
-    w.created_by !== currentUser?.email && w.is_public !== false
-  );
+  const communityWorkouts = allWorkouts.filter(w => w.is_public === true);
   const displayedWorkouts = activeTab === 'my' ? myWorkouts : communityWorkouts;
 
   const createMutation = useMutation({

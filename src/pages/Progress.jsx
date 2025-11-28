@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   Dumbbell, Clock, TrendingUp, Calendar, 
-  Flame, Weight, BarChart3, Trophy, Loader2
+  Flame, Weight, BarChart3, Trophy, Loader2, Trash2
 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { motion } from 'framer-motion';
 import { format, subDays, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import {
@@ -20,6 +32,8 @@ const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
 export default function Progress() {
   const [currentUser, setCurrentUser] = useState(null);
   const [timeRange, setTimeRange] = useState('week');
+  const [deleteSessionId, setDeleteSessionId] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -32,6 +46,15 @@ export default function Progress() {
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['sessions'],
     queryFn: () => base44.entities.WorkoutSession.list('-started_at'),
+  });
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: (id) => base44.entities.WorkoutSession.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      toast.success('Session deleted');
+      setDeleteSessionId(null);
+    }
   });
 
   // Filter sessions by current user
@@ -350,8 +373,8 @@ export default function Progress() {
                 <p className="text-slate-500 text-center py-8">No workout sessions yet</p>
               ) : (
                 <div className="space-y-3">
-                  {mySessions.slice(0, 5).map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  {mySessions.slice(0, 10).map((session) => (
+                    <div key={session.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg group">
                       <div>
                         <p className="font-medium text-slate-900">{session.workout_name}</p>
                         <p className="text-xs text-slate-500">
@@ -365,6 +388,14 @@ export default function Progress() {
                         <Badge variant="outline">
                           {formatDuration(session.duration_seconds)}
                         </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600"
+                          onClick={() => setDeleteSessionId(session.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -374,6 +405,27 @@ export default function Progress() {
           </Card>
         </motion.div>
       </main>
+
+      {/* Delete Session Dialog */}
+      <AlertDialog open={!!deleteSessionId} onOpenChange={() => setDeleteSessionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this workout session from your history? This won't affect your workout templates.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => deleteSessionMutation.mutate(deleteSessionId)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

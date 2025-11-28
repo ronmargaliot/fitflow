@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, Plus, Loader2, Settings, Trash2,
-  Play, MoreVertical, Lock, Users
+  Play, MoreVertical, Lock, Users, Share2, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,6 +81,24 @@ export default function WorkoutDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
       navigate(createPageUrl('Home'));
+    }
+  });
+
+  const shareMutation = useMutation({
+    mutationFn: () => base44.entities.Workout.update(workoutId, { is_public: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workout', workoutId] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      toast.success('Workout shared to community!');
+    }
+  });
+
+  const unShareMutation = useMutation({
+    mutationFn: () => base44.entities.Workout.update(workoutId, { is_public: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workout', workoutId] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      toast.success('Workout removed from community');
     }
   });
 
@@ -186,19 +205,31 @@ export default function WorkoutDetail() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                      <Settings className="w-4 h-4 mr-2" />
-                      Edit Workout
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => setShowDeleteDialog(true)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Workout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Edit Workout
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {workout.is_public ? (
+                        <DropdownMenuItem onClick={() => unShareMutation.mutate()}>
+                          <EyeOff className="w-4 h-4 mr-2" />
+                          Remove from Community
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => shareMutation.mutate()}>
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Share to Community
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-red-600"
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Workout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
                 <Button variant="ghost" size="icon" className="rounded-full" disabled>

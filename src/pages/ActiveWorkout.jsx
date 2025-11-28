@@ -42,12 +42,13 @@ export default function ActiveWorkout() {
   const [editData, setEditData] = useState(null);
   const [localExercises, setLocalExercises] = useState([]);
   
-  // Workout timer state
-  const [startTime] = useState(new Date());
+  const [startTime, setStartTime] = useState(() => new Date());
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showFinishDialog, setShowFinishDialog] = useState(false);
+  const [isRestoringState, setIsRestoringState] = useState(true);
+  const [activeStateId, setActiveStateId] = useState(null);
 
-  const { data: workout, isLoading } = useQuery({
+  const { data: workout, isLoading: workoutLoading } = useQuery({
     queryKey: ['workout', workoutId],
     queryFn: async () => {
       const workouts = await base44.entities.Workout.filter({ id: workoutId });
@@ -56,19 +57,88 @@ export default function ActiveWorkout() {
     enabled: !!workoutId
   });
 
+  // Check for existing active state
+  const { data: existingState, isLoading: stateLoading } = useQuery({
+    queryKey: ['activeState', workoutId],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      const states = await base44.entities.ActiveWorkoutState.filter({ 
+        workout_id: workoutId,
+        created_by: user.email 
+      });
+      return states[0] || null;
+    },
+    enabled: !!workoutId
+  });
+
+  // Restore state or initialize
   useEffect(() => {
-    if (workout?.exercises) {
+    if (stateLoading || workoutLoading) return;
+    
+    if (existingState) {
+      // Restore from saved state
+      setStartTime(new Date(existingState.started_at));
+      setCurrentExerciseIndex(existingState.current_exercise_index || 0);
+      setCurrentSet(existingState.current_set || 1);
+      setCompletedSets(existingState.completed_sets || {});
+      setLocalExercises(existingState.local_exercises || workout?.exercises || []);
+      setActiveStateId(existingState.id);
+    } else if (workout?.exercises) {
       setLocalExercises(workout.exercises);
     }
-  }, [workout]);
+    setIsRestoringState(false);
+  }, [existingState, workout, stateLoading, workoutLoading]);
 
-  // Total workout timer
+  // Calculate elapsed time based on start time
   useEffect(() => {
+    if (isRestoringState) return;
     const interval = setInterval(() => {
       setElapsedTime(Math.floor((new Date() - startTime) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, isRestoringState]);
+
+  const saveStateMutation = useMutation({
+    mutationFn: async (stateData) => {
+      if (activeStateId) {
+        return base44.entities.ActiveWorkoutState.update(activeStateId, stateData);
+      } else {
+        const created = await base44.entities.ActiveWorkoutState.create({
+          workout_id: workoutId,
+          ...stateData
+        });
+        setActiveStateId(created.id);
+        return created;
+      }
+    }
+  });
+
+  const deleteStateMutation = useMutation({
+    mutationFn: async () => {
+      if (activeStateId) {
+        await base44.entities.ActiveWorkoutState.delete(activeStateId);
+      }
+    }
+  });
+
+  // Save state periodically and on changes
+  useEffect(() => {
+    if (isRestoringState || !workoutId) return;
+    
+    const saveState = () => {
+      saveStateMutation.mutate({
+        started_at: startTime.toISOString(),
+        current_exercise_index: currentExerciseIndex,
+        current_set: currentSet,
+        completed_sets: completedSets,
+        local_exercises: localExercises
+      });
+    };
+
+    // Debounce saves
+    const timeout = setTimeout(saveState, 1000);
+    return () => clearTimeout(timeout);
+  }, [currentExerciseIndex, currentSet, completedSets, localExercises, isRestoringState]);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Workout.update(workoutId, data),
@@ -160,6 +230,10 @@ export default function ActiveWorkout() {
       is_complete: completedTotal >= totalSets
     });
 
+    // Clear the active state
+    await deleteStateMutation.mutateAsync();
+    queryClient.invalidateQueries({ queryKey: ['activeState'] });
+
     navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
   };
 
@@ -190,7 +264,6 @@ export default function ActiveWorkout() {
         setIsResting(true);
         setIsExerciseRest(true);
       } else {
-        // All exercises complete - auto finish
         setShowFinishDialog(true);
       }
     }
@@ -205,7 +278,8 @@ export default function ActiveWorkout() {
   const handleExerciseClick = (index) => {
     if (editingExerciseId) return;
     setCurrentExerciseIndex(index);
-    setCurrentSet(1);
+    const completedCount = completedSets[exercises[index]?.id]?.length || 0;
+    setCurrentSet(Math.min(completedCount + 1, exercises[index]?.sets || 1));
     setIsResting(false);
     setRestTime(0);
     setIsExerciseRest(false);
@@ -242,10 +316,15 @@ export default function ActiveWorkout() {
     return getCompletedSetsCount(exercise.id) >= exercise.sets;
   };
 
+  const isLoading = workoutLoading || stateLoading || isRestoringState;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-white mx-auto mb-2" />
+          <p className="text-slate-400 text-sm">Loading workout...</p>
+        </div>
       </div>
     );
   }

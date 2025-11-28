@@ -2,12 +2,12 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, ChevronRight, Clock, Users, Copy } from 'lucide-react';
+import { Dumbbell, ChevronRight, Clock, Users, Copy, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, currentUserEmail }) {
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
 
@@ -39,23 +39,36 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
           <div className="relative p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-lg font-semibold text-slate-900 truncate">
-                    {workout.name}
-                  </h3>
-                  {showCommunityBadge && (
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
-                      <Users className="w-3 h-3 mr-1" />
-                      Community
-                    </Badge>
-                  )}
-                  {workout.original_workout_id && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
-                      <Copy className="w-3 h-3 mr-1" />
-                      Copy
-                    </Badge>
-                  )}
-                </div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="text-lg font-semibold text-slate-900 truncate max-w-[180px] sm:max-w-none">
+                      {workout.name}
+                    </h3>
+                    {showCommunityBadge && (
+                      <Badge variant="secondary" className={`text-xs flex-shrink-0 ${
+                        isOwner 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        {isOwner ? (
+                          <>
+                            <User className="w-3 h-3 mr-1" />
+                            Yours
+                          </>
+                        ) : (
+                          <>
+                            <Users className="w-3 h-3 mr-1" />
+                            Community
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                    {workout.original_workout_id && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs flex-shrink-0">
+                        <Copy className="w-3 h-3 mr-1" />
+                        Copy
+                      </Badge>
+                    )}
+                  </div>
                 <p className="text-sm text-slate-500 line-clamp-1 mb-3">
                   {workout.description}
                 </p>

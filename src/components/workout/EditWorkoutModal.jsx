@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Check, X } from 'lucide-react';
 import { CATEGORIES, BODY_AREAS, DIFFICULTIES } from './WorkoutFilters';
+import ImageUpload from '@/components/common/ImageUpload';
 
 const COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', 
@@ -36,7 +37,8 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
     category: 'strength',
     body_areas: [],
     difficulty: 'intermediate',
-    duration_minutes: 45
+    duration_minutes: 45,
+    cover_image: ''
   });
 
   useEffect(() => {
@@ -50,7 +52,8 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
         category: workout.category || 'strength',
         body_areas: workout.body_areas || [],
         difficulty: workout.difficulty || 'intermediate',
-        duration_minutes: workout.duration_minutes || 45
+        duration_minutes: workout.duration_minutes || 45,
+        cover_image: workout.cover_image || ''
       });
     } else {
       setData({
@@ -62,7 +65,8 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
         category: 'strength',
         body_areas: [],
         difficulty: 'intermediate',
-        duration_minutes: 45
+        duration_minutes: 45,
+        cover_image: ''
       });
     }
   }, [workout, open]);
@@ -85,7 +89,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
             {workout ? 'Edit Workout' : 'Create New Workout'}
@@ -202,6 +206,16 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
             </div>
           </div>
           
+          <div>
+            <Label>Cover Image</Label>
+            <ImageUpload
+              value={data.cover_image}
+              onChange={(url) => setData({ ...data, cover_image: url })}
+              className="mt-2 h-32"
+              placeholder="Upload cover image"
+            />
+          </div>
+
           <div>
             <Label>Theme Color</Label>
             <div className="flex gap-2 mt-2">

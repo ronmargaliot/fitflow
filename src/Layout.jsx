@@ -15,13 +15,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+    const checkAuth = async () => {
+      const authenticated = await base44.auth.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      if (authenticated) {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      }
     };
-    loadUser();
+    checkAuth();
   }, []);
 
   const handleLogout = () => {
@@ -29,10 +34,23 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Pages without navigation
-  const hideNav = ['ActiveWorkout'].includes(currentPageName);
+  const hideNav = ['ActiveWorkout', 'Landing'].includes(currentPageName);
+
+  // Show Landing page for non-authenticated users
+  if (isAuthenticated === false && currentPageName !== 'Landing') {
+    window.location.href = createPageUrl('Landing');
+    return null;
+  }
 
   if (hideNav) {
     return <>{children}</>;
+  }
+
+  // Still checking auth
+  if (isAuthenticated === null) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-2 border-slate-300 border-t-slate-600 rounded-full" />
+    </div>;
   }
 
   return (

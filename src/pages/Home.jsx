@@ -3,17 +3,21 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Dumbbell, Loader2, Users, User } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Plus, Dumbbell, Loader2, Users, User, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import WorkoutCard from '@/components/workout/WorkoutCard';
 import EditWorkoutModal from '@/components/workout/EditWorkoutModal';
+import WorkoutFilters from '@/components/workout/WorkoutFilters';
 
 export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState('my');
   const [currentUser, setCurrentUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({ category: '', bodyArea: '', difficulty: '', sortBy: 'recent' });
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -29,10 +33,50 @@ export default function Home() {
     queryFn: () => base44.entities.Workout.list()
   });
 
-  // Filter workouts based on tab
+  // Filter workouts based on tab and filters
   const myWorkouts = allWorkouts.filter(w => w.created_by === currentUser?.email);
   const communityWorkouts = allWorkouts.filter(w => w.is_public === true);
-  const displayedWorkouts = activeTab === 'my' ? myWorkouts : communityWorkouts;
+  
+  const applyFilters = (workouts) => {
+    let filtered = [...workouts];
+    
+    // Search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(w => 
+        w.name?.toLowerCase().includes(query) ||
+        w.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Category filter
+    if (filters.category) {
+      filtered = filtered.filter(w => w.category === filters.category);
+    }
+    
+    // Body area filter
+    if (filters.bodyArea) {
+      filtered = filtered.filter(w => w.body_areas?.includes(filters.bodyArea));
+    }
+    
+    // Difficulty filter
+    if (filters.difficulty) {
+      filtered = filtered.filter(w => w.difficulty === filters.difficulty);
+    }
+    
+    // Sort
+    if (filters.sortBy === 'popular') {
+      filtered.sort((a, b) => (b.copy_count || 0) - (a.copy_count || 0));
+    } else if (filters.sortBy === 'name') {
+      filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } else {
+      filtered.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    }
+    
+    return filtered;
+  };
+  
+  const displayedWorkouts = applyFilters(activeTab === 'my' ? myWorkouts : communityWorkouts);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Workout.create({ 
@@ -47,17 +91,29 @@ export default function Home() {
 
   const copyMutation = useMutation({
     mutationFn: async (workout) => {
-      return base44.entities.Workout.create({
+      // Create the copy
+      const copy = await base44.entities.Workout.create({
         name: `${workout.name} (Copy)`,
         description: workout.description,
         exercises: workout.exercises,
         default_rest: workout.default_rest,
         rest_between_exercises: workout.rest_between_exercises,
         color: workout.color,
+        category: workout.category,
+        body_areas: workout.body_areas,
+        difficulty: workout.difficulty,
+        duration_minutes: workout.duration_minutes,
         is_public: false,
         original_workout_id: workout.id,
         original_creator: workout.created_by
       });
+      
+      // Increment copy count on original
+      await base44.entities.Workout.update(workout.id, {
+        copy_count: (workout.copy_count || 0) + 1
+      });
+      
+      return copy;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
@@ -112,6 +168,20 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+          </div>
+
+          {/* Search & Filters */}
+          <div className="mt-4 space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search workouts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <WorkoutFilters filters={filters} onFilterChange={setFilters} />
           </div>
         </div>
       </header>

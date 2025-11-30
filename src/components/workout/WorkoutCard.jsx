@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, ChevronRight, Clock, Users, Copy, User } from 'lucide-react';
+import { Dumbbell, ChevronRight, Clock, Users, Copy, User, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -73,18 +73,28 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                   {workout.description}
                 </p>
                 
-                <div className="flex items-center gap-3 flex-wrap">
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-medium">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {workout.category && (
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {workout.category}
+                    </Badge>
+                  )}
+                  {workout.difficulty && (
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {workout.difficulty}
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-medium text-xs">
                     <Dumbbell className="w-3 h-3 mr-1" />
-                    {exerciseCount} exercises
+                    {exerciseCount}
                   </Badge>
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-medium">
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-medium text-xs">
                     {totalSets} sets
                   </Badge>
-                  {workout.default_rest && (
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-medium">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {workout.default_rest}s rest
+                  {(workout.copy_count || 0) > 0 && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                      <Copy className="w-3 h-3 mr-1" />
+                      {workout.copy_count}
                     </Badge>
                   )}
                 </div>

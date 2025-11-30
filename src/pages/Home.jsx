@@ -36,7 +36,7 @@ export default function Home() {
     staleTime: 10000
   });
 
-  const { getLikesForWorkout } = useBulkLikes();
+  const { getLikesForWorkout, allLikes } = useBulkLikes();
 
   // Filter workouts based on tab and filters
   const myWorkouts = allWorkouts.filter(w => w.created_by === currentUser?.email);
@@ -72,6 +72,12 @@ export default function Home() {
     // Sort
     if (filters.sortBy === 'popular') {
       filtered.sort((a, b) => (b.copy_count || 0) - (a.copy_count || 0));
+    } else if (filters.sortBy === 'liked') {
+      filtered.sort((a, b) => {
+        const aLikes = allLikes.filter(l => l.workout_id === a.id).length;
+        const bLikes = allLikes.filter(l => l.workout_id === b.id).length;
+        return bLikes - aLikes;
+      });
     } else if (filters.sortBy === 'name') {
       filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     } else {

@@ -44,7 +44,7 @@ const DIFFICULTIES = [
 
 export default function WorkoutFilters({ filters, onFilterChange }) {
   const [open, setOpen] = useState(false);
-  const hasActiveFilters = filters.category || filters.bodyArea || filters.difficulty || filters.sortBy !== 'recent';
+  const hasActiveFilters = filters.category || filters.bodyArea || filters.difficulty || (filters.sortBy && filters.sortBy !== 'recent');
   const activeCount = [filters.category, filters.bodyArea, filters.difficulty, filters.sortBy !== 'recent' ? 'sort' : null].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -107,7 +107,8 @@ export default function WorkoutFilters({ filters, onFilterChange }) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="recent">Most Recent</SelectItem>
-          <SelectItem value="popular">Most Popular</SelectItem>
+          <SelectItem value="popular">Most Copied</SelectItem>
+          <SelectItem value="liked">Most Liked</SelectItem>
           <SelectItem value="name">Name A-Z</SelectItem>
         </SelectContent>
       </Select>

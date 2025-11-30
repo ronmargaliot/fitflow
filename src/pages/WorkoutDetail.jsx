@@ -328,6 +328,12 @@ export default function WorkoutDetail() {
             </Button>
           </motion.div>
         )}
+        {/* Comments Section - only for public workouts */}
+        {workout.is_public && (
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <CommentSection workoutId={workoutId} currentUser={currentUser} />
+          </div>
+        )}
       </main>
 
       <AddExerciseModal
@@ -342,28 +348,6 @@ export default function WorkoutDetail() {
         onClose={() => setShowEditModal(false)}
         workout={workout}
         onSave={handleEditWorkout}
-      />
-
-      {/* Comments Section - only for public workouts */}
-      {workout.is_public && (
-        <div className="mt-8 pt-6 border-t border-slate-200">
-          <CommentSection workoutId={workoutId} currentUser={currentUser} />
-        </div>
-      )}
-      </main>
-
-      <AddExerciseModal
-      open={showAddModal}
-      onClose={() => setShowAddModal(false)}
-      onAdd={handleAddExercise}
-      defaultRest={workout.default_rest}
-      />
-
-      <EditWorkoutModal
-      open={showEditModal}
-      onClose={() => setShowEditModal(false)}
-      workout={workout}
-      onSave={handleEditWorkout}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -384,7 +368,7 @@ export default function WorkoutDetail() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-        </AlertDialog>
-        </div>
-        );
-        }
+      </AlertDialog>
+    </div>
+  );
+}

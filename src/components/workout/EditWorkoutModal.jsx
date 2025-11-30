@@ -10,7 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Check } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Check, X } from 'lucide-react';
+import { CATEGORIES, BODY_AREAS, DIFFICULTIES } from './WorkoutFilters';
 
 const COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', 
@@ -23,7 +32,11 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
     description: '',
     default_rest: 90,
     rest_between_exercises: 120,
-    color: '#6366f1'
+    color: '#6366f1',
+    category: 'strength',
+    body_areas: [],
+    difficulty: 'intermediate',
+    duration_minutes: 45
   });
 
   useEffect(() => {
@@ -33,10 +46,35 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
         description: workout.description || '',
         default_rest: workout.default_rest || 90,
         rest_between_exercises: workout.rest_between_exercises || 120,
-        color: workout.color || '#6366f1'
+        color: workout.color || '#6366f1',
+        category: workout.category || 'strength',
+        body_areas: workout.body_areas || [],
+        difficulty: workout.difficulty || 'intermediate',
+        duration_minutes: workout.duration_minutes || 45
+      });
+    } else {
+      setData({
+        name: '',
+        description: '',
+        default_rest: 90,
+        rest_between_exercises: 120,
+        color: '#6366f1',
+        category: 'strength',
+        body_areas: [],
+        difficulty: 'intermediate',
+        duration_minutes: 45
       });
     }
-  }, [workout]);
+  }, [workout, open]);
+
+  const toggleBodyArea = (area) => {
+    setData(prev => ({
+      ...prev,
+      body_areas: prev.body_areas.includes(area)
+        ? prev.body_areas.filter(a => a !== area)
+        : [...prev.body_areas, area]
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -81,7 +119,69 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
           
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="rest">Rest Between Sets (s)</Label>
+              <Label>Category</Label>
+              <Select value={data.category} onValueChange={(v) => setData({ ...data, category: v })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Difficulty</Label>
+              <Select value={data.difficulty} onValueChange={(v) => setData({ ...data, difficulty: v })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIFFICULTIES.map((diff) => (
+                    <SelectItem key={diff.value} value={diff.value}>{diff.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>Body Areas</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {BODY_AREAS.map((area) => (
+                <Badge
+                  key={area.value}
+                  variant={data.body_areas.includes(area.value) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    data.body_areas.includes(area.value) 
+                      ? 'bg-slate-900 hover:bg-slate-800' 
+                      : 'hover:bg-slate-100'
+                  }`}
+                  onClick={() => toggleBodyArea(area.value)}
+                >
+                  {area.label}
+                  {data.body_areas.includes(area.value) && (
+                    <X className="w-3 h-3 ml-1" />
+                  )}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="duration">Duration (min)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={data.duration_minutes}
+                onChange={(e) => setData({ ...data, duration_minutes: parseInt(e.target.value) || 45 })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rest">Rest/Sets (s)</Label>
               <Input
                 id="rest"
                 type="number"
@@ -91,7 +191,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
               />
             </div>
             <div>
-              <Label htmlFor="rest_exercises">Rest Between Exercises (s)</Label>
+              <Label htmlFor="rest_exercises">Rest/Exercises (s)</Label>
               <Input
                 id="rest_exercises"
                 type="number"

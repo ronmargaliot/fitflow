@@ -43,6 +43,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
               src={coverImage} 
               alt={workout.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => { e.target.src = DEFAULT_IMAGES.default; }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             

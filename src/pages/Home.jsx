@@ -16,7 +16,7 @@ import { useBulkLikes } from '@/components/social/useLikes';
 
 export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('my');
+  const [activeTab, setActiveTab] = useState('community');
   const [currentUser, setCurrentUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ category: '', bodyArea: '', difficulty: '', sortBy: 'recent' });

@@ -39,6 +39,10 @@ export default function ImageUpload({ value, onChange, className = '', placehold
     onChange('');
   };
 
+  const handleImageError = (e) => {
+    e.target.src = 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop';
+  };
+
   if (value) {
     return (
       <div className={`relative rounded-lg overflow-hidden ${className}`}>
@@ -46,6 +50,7 @@ export default function ImageUpload({ value, onChange, className = '', placehold
           src={value} 
           alt="Uploaded" 
           className="w-full h-full object-cover"
+          onError={handleImageError}
         />
         <Button
           type="button"

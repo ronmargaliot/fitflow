@@ -328,6 +328,7 @@ export default function WorkoutDetail() {
             </Button>
           </motion.div>
         )}
+
         {/* Comments Section - only for public workouts */}
         {workout.is_public && (
           <div className="mt-8 pt-6 border-t border-slate-200">

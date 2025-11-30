@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from 'lucide-react';
+import ImageUpload from '@/components/common/ImageUpload';
 
 export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) {
   const [exercise, setExercise] = useState({
@@ -19,7 +20,8 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
     reps: '8',
     rest: defaultRest || 90,
     weight: 0,
-    notes: ''
+    notes: '',
+    demo_image: ''
   });
 
   const handleSubmit = (e) => {
@@ -37,7 +39,8 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
       reps: '8',
       rest: defaultRest || 90,
       weight: 0,
-      notes: ''
+      notes: '',
+      demo_image: ''
     });
     onClose();
   };
@@ -107,16 +110,27 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
             />
           </div>
           
-          <div>
-            <Label htmlFor="notes">Notes - optional</Label>
-            <Textarea
-              id="notes"
-              value={exercise.notes}
-              onChange={(e) => setExercise({ ...exercise, notes: e.target.value })}
-              className="mt-1"
-              placeholder="Any additional notes..."
-              rows={2}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="notes">Notes - optional</Label>
+              <Textarea
+                id="notes"
+                value={exercise.notes}
+                onChange={(e) => setExercise({ ...exercise, notes: e.target.value })}
+                className="mt-1"
+                placeholder="Any additional notes..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Demo Image - optional</Label>
+              <ImageUpload
+                value={exercise.demo_image}
+                onChange={(url) => setExercise({ ...exercise, demo_image: url })}
+                className="mt-1 h-20"
+                placeholder="Add demo"
+              />
+            </div>
           </div>
           
           <DialogFooter>

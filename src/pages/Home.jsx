@@ -11,6 +11,8 @@ import { createPageUrl } from '@/utils';
 import WorkoutCard from '@/components/workout/WorkoutCard';
 import EditWorkoutModal from '@/components/workout/EditWorkoutModal';
 import WorkoutFilters from '@/components/workout/WorkoutFilters';
+import WorkoutCardSkeleton from '@/components/common/WorkoutCardSkeleton';
+import { useBulkLikes } from '@/components/social/useLikes';
 
 export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -30,8 +32,11 @@ export default function Home() {
 
   const { data: allWorkouts = [], isLoading } = useQuery({
     queryKey: ['workouts'],
-    queryFn: () => base44.entities.Workout.list()
+    queryFn: () => base44.entities.Workout.list(),
+    staleTime: 10000
   });
+
+  const { getLikesForWorkout } = useBulkLikes();
 
   // Filter workouts based on tab and filters
   const myWorkouts = allWorkouts.filter(w => w.created_by === currentUser?.email);
@@ -189,8 +194,10 @@ export default function Home() {
       {/* Content */}
       <main className="max-w-6xl mx-auto px-4 py-6">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <WorkoutCardSkeleton key={i} />
+            ))}
           </div>
         ) : displayedWorkouts.length === 0 ? (
           <motion.div 
@@ -238,6 +245,7 @@ export default function Home() {
                     isOwner={workout.created_by === currentUser?.email}
                     showCommunityBadge={activeTab === 'community'}
                     onCopy={() => handleCopyWorkout(workout)}
+                    likeData={getLikesForWorkout(workout.id, currentUser?.email)}
                   />
                 </motion.div>
               ))}

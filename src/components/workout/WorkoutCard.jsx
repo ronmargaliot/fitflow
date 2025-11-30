@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, ChevronRight, Clock, Users, Copy, User, Heart } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -18,7 +18,7 @@ const DEFAULT_IMAGES = {
   default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
 };
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, likeData }) {
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
   const coverImage = workout.cover_image || DEFAULT_IMAGES[workout.category] || DEFAULT_IMAGES.default;
@@ -75,15 +75,21 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
               )}
             </div>
 
-            {/* Copy count */}
-            {(workout.copy_count || 0) > 0 && (
-              <div className="absolute top-2 right-2">
+            {/* Stats badges */}
+            <div className="absolute top-2 right-2 flex gap-1">
+              {likeData?.likeCount > 0 && (
+                <Badge className="bg-white/90 text-red-500 text-xs">
+                  <Heart className={`w-3 h-3 mr-1 ${likeData?.isLiked ? 'fill-current' : ''}`} />
+                  {likeData.likeCount}
+                </Badge>
+              )}
+              {(workout.copy_count || 0) > 0 && (
                 <Badge className="bg-white/90 text-slate-700 text-xs">
                   <Copy className="w-3 h-3 mr-1" />
                   {workout.copy_count}
                 </Badge>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Title on image */}
             <div className="absolute bottom-2 left-3 right-3">

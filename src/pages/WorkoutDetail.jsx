@@ -32,6 +32,10 @@ import {
 import ExerciseItem from '@/components/workout/ExerciseItem';
 import AddExerciseModal from '@/components/workout/AddExerciseModal';
 import EditWorkoutModal from '@/components/workout/EditWorkoutModal';
+import LikeButton from '@/components/social/LikeButton';
+import CommentSection from '@/components/social/CommentSection';
+import { useLikes } from '@/components/social/useLikes';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WorkoutDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -59,8 +63,11 @@ export default function WorkoutDetail() {
       const workouts = await base44.entities.Workout.filter({ id: workoutId });
       return workouts[0];
     },
-    enabled: !!workoutId
+    enabled: !!workoutId,
+    staleTime: 10000
   });
+
+  const { isLiked, likeCount, toggleLike, isLoading: likeLoading } = useLikes(workoutId, currentUser?.email);
 
   useEffect(() => {
     if (workout?.exercises) {
@@ -138,8 +145,23 @@ export default function WorkoutDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        <header className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200">
+          <div className="max-w-2xl mx-auto px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </main>
       </div>
     );
   }
@@ -190,6 +212,13 @@ export default function WorkoutDetail() {
             </div>
             
             <div className="flex items-center gap-2">
+              <LikeButton
+                isLiked={isLiked}
+                likeCount={likeCount}
+                onToggle={toggleLike}
+                loading={likeLoading}
+                size="sm"
+              />
               <Link to={createPageUrl(`ActiveWorkout?id=${workoutId}`)}>
                 <Button className="bg-slate-900 hover:bg-slate-800 shadow-lg">
                   <Play className="w-4 h-4 mr-2" />
@@ -315,6 +344,28 @@ export default function WorkoutDetail() {
         onSave={handleEditWorkout}
       />
 
+      {/* Comments Section - only for public workouts */}
+      {workout.is_public && (
+        <div className="mt-8 pt-6 border-t border-slate-200">
+          <CommentSection workoutId={workoutId} currentUser={currentUser} />
+        </div>
+      )}
+      </main>
+
+      <AddExerciseModal
+      open={showAddModal}
+      onClose={() => setShowAddModal(false)}
+      onAdd={handleAddExercise}
+      defaultRest={workout.default_rest}
+      />
+
+      <EditWorkoutModal
+      open={showEditModal}
+      onClose={() => setShowEditModal(false)}
+      workout={workout}
+      onSave={handleEditWorkout}
+      />
+
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -333,7 +384,7 @@ export default function WorkoutDetail() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
+        </AlertDialog>
+        </div>
+        );
+        }

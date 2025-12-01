@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare } from 'lucide-react';
+import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, Timer, Hash } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ExerciseItem({ 
@@ -29,6 +29,8 @@ export default function ExerciseItem({
   };
 
   if (isEditing) {
+    const isTimeBased = editData.exercise_type === 'time';
+    
     return (
       <Card className="p-4 border-2 border-slate-300 bg-slate-50">
         <div className="space-y-3">
@@ -38,6 +40,38 @@ export default function ExerciseItem({
             placeholder="Exercise name"
             className="font-medium"
           />
+          
+          {/* Exercise Type Toggle */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={!isTimeBased ? 'default' : 'outline'}
+              size="sm"
+              className={`flex items-center justify-center gap-2 ${
+                !isTimeBased 
+                  ? 'bg-slate-900 text-white hover:bg-slate-800' 
+                  : 'bg-white hover:bg-slate-50'
+              }`}
+              onClick={() => setEditData({ ...editData, exercise_type: 'reps' })}
+            >
+              <Hash className="w-4 h-4" />
+              Rep-based
+            </Button>
+            <Button
+              type="button"
+              variant={isTimeBased ? 'default' : 'outline'}
+              size="sm"
+              className={`flex items-center justify-center gap-2 ${
+                isTimeBased 
+                  ? 'bg-green-600 text-white hover:bg-green-700' 
+                  : 'bg-white hover:bg-slate-50'
+              }`}
+              onClick={() => setEditData({ ...editData, exercise_type: 'time' })}
+            >
+              <Timer className="w-4 h-4" />
+              Time-based
+            </Button>
+          </div>
           
           <div className="grid grid-cols-3 gap-2">
             <div>
@@ -49,14 +83,26 @@ export default function ExerciseItem({
                 placeholder="Sets"
               />
             </div>
-            <div>
-              <label className="text-xs text-slate-500 mb-1 block">Reps</label>
-              <Input
-                value={editData.reps}
-                onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
-                placeholder="Reps"
-              />
-            </div>
+            {isTimeBased ? (
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Duration (s)</label>
+                <Input
+                  type="number"
+                  value={editData.duration_seconds || 30}
+                  onChange={(e) => setEditData({ ...editData, duration_seconds: parseInt(e.target.value) || 30 })}
+                  placeholder="30"
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Reps</label>
+                <Input
+                  value={editData.reps}
+                  onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
+                  placeholder="Reps"
+                />
+              </div>
+            )}
             <div>
               <label className="text-xs text-slate-500 mb-1 block">Rest (s)</label>
               <Input
@@ -138,8 +184,8 @@ export default function ExerciseItem({
               </div>
               
               <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-slate-900 text-white hover:bg-slate-800">
-                  {exercise.sets} × {exercise.reps}
+                <Badge className={`${exercise.exercise_type === 'time' ? 'bg-green-600' : 'bg-slate-900'} text-white hover:opacity-90`}>
+                  {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
                 </Badge>
                 
                 {exercise.rest && (

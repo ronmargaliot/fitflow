@@ -24,6 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import UndoToast from '@/components/workout/UndoToast';
+import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -47,6 +49,13 @@ export default function ActiveWorkout() {
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [isRestoringState, setIsRestoringState] = useState(true);
   const [activeStateId, setActiveStateId] = useState(null);
+  
+  // Undo state
+  const [undoState, setUndoState] = useState(null);
+  const [showUndo, setShowUndo] = useState(false);
+  
+  // Time-based exercise state
+  const [isTimerActive, setIsTimerActive] = useState(false);
 
   const { data: workout, isLoading: workoutLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -239,6 +248,17 @@ export default function ActiveWorkout() {
 
   const handleCompleteSet = useCallback(() => {
     const exerciseId = currentExercise.id;
+    
+    // Save state for undo
+    setUndoState({
+      completedSets: { ...completedSets },
+      currentSet,
+      currentExerciseIndex,
+      exerciseId,
+      setNumber: currentSet
+    });
+    setShowUndo(true);
+    
     const newCompletedSets = { ...completedSets };
     
     if (!newCompletedSets[exerciseId]) {
@@ -268,6 +288,23 @@ export default function ActiveWorkout() {
       }
     }
   }, [currentExercise, currentSet, completedSets, currentExerciseIndex, exercises, workout]);
+
+  const handleUndo = useCallback(() => {
+    if (!undoState) return;
+    
+    setCompletedSets(undoState.completedSets);
+    setCurrentSet(undoState.currentSet);
+    setCurrentExerciseIndex(undoState.currentExerciseIndex);
+    setIsResting(false);
+    setRestTime(0);
+    setShowUndo(false);
+    setUndoState(null);
+  }, [undoState]);
+
+  const handleTimerComplete = useCallback(() => {
+    setIsTimerActive(false);
+    handleCompleteSet();
+  }, [handleCompleteSet]);
 
   const handleSkipRest = () => {
     setIsResting(false);
@@ -599,7 +636,7 @@ export default function ActiveWorkout() {
                             <Badge className={`${
                               isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
                             }`}>
-                              {exercise.sets} × {exercise.reps}
+                              {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
                             </Badge>
                             
                             {exercise.rest && (
@@ -678,17 +715,38 @@ export default function ActiveWorkout() {
             </div>
           </div>
           
-          <Button
-            size="lg"
-            className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
-            onClick={handleCompleteSet}
-            disabled={isResting}
-          >
-            <Check className="w-5 h-5 mr-2" />
-            Complete Set {currentSet}
-          </Button>
+          {currentExercise.exercise_type === 'time' ? (
+            <ActiveExerciseTimer
+              duration={currentExercise.duration_seconds || 30}
+              isActive={!isResting}
+              onComplete={handleTimerComplete}
+              onStart={() => setIsTimerActive(true)}
+              onPause={() => setIsTimerActive(false)}
+            />
+          ) : (
+            <Button
+              size="lg"
+              className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
+              onClick={handleCompleteSet}
+              disabled={isResting}
+            >
+              <Check className="w-5 h-5 mr-2" />
+              Complete Set {currentSet}
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Undo Toast */}
+      <UndoToast
+        show={showUndo}
+        message={`Set ${undoState?.setNumber} completed`}
+        onUndo={handleUndo}
+        onDismiss={() => {
+          setShowUndo(false);
+          setUndoState(null);
+        }}
+      />
 
       {/* Finish Workout Dialog */}
       <AlertDialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>

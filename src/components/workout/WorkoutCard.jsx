@@ -23,6 +23,8 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
   const exerciseCount = workout.exercises?.length || 0;
   const coverImage = workout.cover_image || DEFAULT_IMAGES[workout.category] || DEFAULT_IMAGES.default;
 
+  // Fixed card height for consistent grid
+
   const handleCopy = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -36,7 +38,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <Link to={createPageUrl(`WorkoutDetail?id=${workout.id}`)}>
-        <Card className="relative overflow-hidden cursor-pointer group border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-full">
+        <Card className="relative overflow-hidden cursor-pointer group border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-[280px] flex flex-col">
           {/* Cover Image */}
           <div className="relative h-32 overflow-hidden">
             <img 
@@ -101,14 +103,14 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
           </div>
           
           {/* Content */}
-          <div className="p-4">
+          <div className="p-4 flex-1 flex flex-col">
             {workout.description && (
-              <p className="text-sm text-slate-500 line-clamp-2 mb-3">
+              <p className="text-sm text-slate-500 line-clamp-2 mb-3 flex-shrink-0">
                 {workout.description}
               </p>
             )}
             
-            <div className="flex items-center gap-2 flex-wrap mb-3">
+            <div className="flex items-center gap-2 flex-wrap mb-3 flex-shrink-0">
               {workout.category && (
                 <Badge variant="outline" className="text-xs capitalize">
                   {workout.category}
@@ -127,7 +129,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
               )}
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-auto">
               <div className="flex items-center gap-3 text-sm text-slate-500">
                 <span className="flex items-center gap-1">
                   <Dumbbell className="w-4 h-4" />

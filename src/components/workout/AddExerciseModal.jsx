@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Plus, Timer, Hash } from 'lucide-react';
 import ImageUpload from '@/components/common/ImageUpload';
 
@@ -71,23 +71,35 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
           </div>
 
           <div>
-            <Label>Exercise Type</Label>
-            <Tabs 
-              value={exercise.exercise_type} 
-              onValueChange={(v) => setExercise({ ...exercise, exercise_type: v })}
-              className="mt-2"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="reps" className="flex items-center gap-2">
-                  <Hash className="w-4 h-4" />
-                  Rep-based
-                </TabsTrigger>
-                <TabsTrigger value="time" className="flex items-center gap-2">
-                  <Timer className="w-4 h-4" />
-                  Time-based
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <Label className="mb-2 block">Exercise Type</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={exercise.exercise_type === 'reps' ? 'default' : 'outline'}
+                className={`flex items-center justify-center gap-2 ${
+                  exercise.exercise_type === 'reps' 
+                    ? 'bg-slate-900 text-white hover:bg-slate-800' 
+                    : 'bg-white hover:bg-slate-50'
+                }`}
+                onClick={() => setExercise({ ...exercise, exercise_type: 'reps' })}
+              >
+                <Hash className="w-4 h-4" />
+                Rep-based
+              </Button>
+              <Button
+                type="button"
+                variant={exercise.exercise_type === 'time' ? 'default' : 'outline'}
+                className={`flex items-center justify-center gap-2 ${
+                  exercise.exercise_type === 'time' 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-white hover:bg-slate-50'
+                }`}
+                onClick={() => setExercise({ ...exercise, exercise_type: 'time' })}
+              >
+                <Timer className="w-4 h-4" />
+                Time-based
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Undo2, Check } from 'lucide-react';
@@ -11,27 +11,40 @@ export default function UndoToast({
   duration = 5000 
 }) {
   const [progress, setProgress] = useState(100);
+  const timerRef = useRef(null);
+  const startTimeRef = useRef(null);
 
   useEffect(() => {
     if (!show) {
       setProgress(100);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       return;
     }
 
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
+    startTimeRef.current = Date.now();
+    
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
       const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
       setProgress(remaining);
       
       if (remaining <= 0) {
-        clearInterval(interval);
+        clearInterval(timerRef.current);
+        timerRef.current = null;
         onDismiss?.();
       }
     }, 50);
 
-    return () => clearInterval(interval);
-  }, [show, duration, onDismiss]);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [show, duration]);
 
   return (
     <AnimatePresence>
@@ -54,7 +67,13 @@ export default function UndoToast({
                 size="sm"
                 variant="ghost"
                 className="text-amber-400 hover:text-amber-300 hover:bg-amber-400/20"
-                onClick={onUndo}
+                onClick={() => {
+                  if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
+                  }
+                  onUndo?.();
+                }}
               >
                 <Undo2 className="w-4 h-4 mr-1" />
                 Undo

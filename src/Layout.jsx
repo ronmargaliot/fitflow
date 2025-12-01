@@ -89,7 +89,7 @@ export default function Layout({ children, currentPageName }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto py-2 px-4">
                   <Avatar className="w-6 h-6">
-                    <AvatarImage src={user?.picture} alt={user?.full_name} />
+                    <AvatarImage src={user?.picture || user?.avatar_url || user?.photo_url} alt={user?.full_name} />
                     <AvatarFallback className="text-xs bg-slate-200">
                       {user?.full_name?.[0] || user?.email?.[0] || 'U'}
                     </AvatarFallback>

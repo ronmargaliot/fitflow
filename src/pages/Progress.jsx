@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   Dumbbell, Clock, TrendingUp, Calendar, 
   Flame, Weight, BarChart3, Trophy, Loader2, Trash2
@@ -21,17 +20,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { motion } from 'framer-motion';
-import { format, subDays, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, subDays, subMonths, isAfter } from 'date-fns';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+
+import ProgressFilters from '@/components/progress/ProgressFilters';
+import VolumeChart from '@/components/progress/VolumeChart';
+import FrequencyCalendar from '@/components/progress/FrequencyCalendar';
+import WorkoutProgressCard from '@/components/progress/WorkoutProgressCard';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
 
 export default function Progress() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [timeRange, setTimeRange] = useState('week');
+  const [filters, setFilters] = useState({ timeRange: 'all', workoutId: '' });
   const [deleteSessionId, setDeleteSessionId] = useState(null);
   const queryClient = useQueryClient();
 
@@ -48,6 +51,11 @@ export default function Progress() {
     queryFn: () => base44.entities.WorkoutSession.list('-started_at'),
   });
 
+  const { data: workouts = [] } = useQuery({
+    queryKey: ['workouts'],
+    queryFn: () => base44.entities.Workout.list(),
+  });
+
   const deleteSessionMutation = useMutation({
     mutationFn: (id) => base44.entities.WorkoutSession.delete(id),
     onSuccess: () => {
@@ -59,13 +67,48 @@ export default function Progress() {
 
   // Filter sessions by current user
   const mySessions = sessions.filter(s => s.created_by === currentUser?.email);
+  const myWorkouts = workouts.filter(w => w.created_by === currentUser?.email);
 
-  // Calculate stats
-  const totalWorkouts = mySessions.length;
-  const totalTime = mySessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
-  const totalVolume = mySessions.reduce((acc, s) => acc + (s.total_volume || 0), 0);
-  const totalReps = mySessions.reduce((acc, s) => acc + (s.total_reps || 0), 0);
-  const completedWorkouts = mySessions.filter(s => s.is_complete).length;
+  // Apply filters
+  const getFilteredSessions = () => {
+    let filtered = [...mySessions];
+    
+    // Time range filter
+    if (filters.timeRange && filters.timeRange !== 'all') {
+      const now = new Date();
+      let startDate;
+      
+      if (filters.timeRange === 'week') {
+        startDate = subDays(now, 7);
+      } else if (filters.timeRange === 'month') {
+        startDate = subMonths(now, 1);
+      } else if (filters.timeRange === '3months') {
+        startDate = subMonths(now, 3);
+      } else if (filters.timeRange === 'year') {
+        startDate = subMonths(now, 12);
+      }
+      
+      if (startDate) {
+        filtered = filtered.filter(s => isAfter(new Date(s.started_at), startDate));
+      }
+    }
+    
+    // Workout filter
+    if (filters.workoutId) {
+      filtered = filtered.filter(s => s.workout_id === filters.workoutId);
+    }
+    
+    return filtered;
+  };
+
+  const filteredSessions = getFilteredSessions();
+
+  // Calculate stats from filtered sessions
+  const totalWorkouts = filteredSessions.length;
+  const totalTime = filteredSessions.reduce((acc, s) => acc + (s.duration_seconds || 0), 0);
+  const totalVolume = filteredSessions.reduce((acc, s) => acc + (s.total_volume || 0), 0);
+  const totalReps = filteredSessions.reduce((acc, s) => acc + (s.total_reps || 0), 0);
+  const completedWorkouts = filteredSessions.filter(s => s.is_complete).length;
   const completionRate = totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0;
 
   // Weekly data
@@ -74,7 +117,7 @@ export default function Progress() {
     for (let i = 6; i >= 0; i--) {
       const date = subDays(new Date(), i);
       const dayName = format(date, 'EEE');
-      const daySessions = mySessions.filter(s => 
+      const daySessions = filteredSessions.filter(s => 
         format(new Date(s.started_at), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
       );
       data.push({
@@ -90,7 +133,7 @@ export default function Progress() {
   // Exercise breakdown
   const getExerciseBreakdown = () => {
     const exerciseCounts = {};
-    mySessions.forEach(session => {
+    filteredSessions.forEach(session => {
       session.exercises_completed?.forEach(ex => {
         if (!exerciseCounts[ex.name]) {
           exerciseCounts[ex.name] = { sets: 0, volume: 0 };
@@ -143,11 +186,11 @@ export default function Progress() {
   const personalRecords = getPersonalRecords();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-20">
       {/* Header */}
       <header className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
@@ -156,6 +199,12 @@ export default function Progress() {
               <p className="text-xs text-slate-500">Track your fitness journey</p>
             </div>
           </div>
+          
+          <ProgressFilters 
+            filters={filters} 
+            onFilterChange={setFilters}
+            workouts={myWorkouts}
+          />
         </div>
       </header>
 
@@ -243,11 +292,29 @@ export default function Progress() {
           </motion.div>
         </div>
 
-        {/* Weekly Activity Chart */}
+        {/* Frequency Calendar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+        >
+          <FrequencyCalendar sessions={mySessions} />
+        </motion.div>
+
+        {/* Volume Over Time Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+        >
+          <VolumeChart sessions={filteredSessions} timeRange={filters.timeRange} />
+        </motion.div>
+
+        {/* Weekly Activity Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
         >
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -279,12 +346,35 @@ export default function Progress() {
           </Card>
         </motion.div>
 
+        {/* Workout-specific Progress */}
+        {myWorkouts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <Dumbbell className="w-5 h-5 text-slate-600" />
+              Workout Progress
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {myWorkouts.slice(0, 4).map((workout) => (
+                <WorkoutProgressCard 
+                  key={workout.id}
+                  workout={workout}
+                  sessions={filteredSessions}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         <div className="grid md:grid-cols-2 gap-6">
           {/* Top Exercises */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.65 }}
           >
             <Card className="border-0 shadow-lg">
               <CardHeader>
@@ -359,7 +449,7 @@ export default function Progress() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.75 }}
         >
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -369,11 +459,11 @@ export default function Progress() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {mySessions.length === 0 ? (
+              {filteredSessions.length === 0 ? (
                 <p className="text-slate-500 text-center py-8">No workout sessions yet</p>
               ) : (
                 <div className="space-y-3">
-                  {mySessions.slice(0, 10).map((session) => (
+                  {filteredSessions.slice(0, 10).map((session) => (
                     <div key={session.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg group">
                       <div>
                         <p className="font-medium text-slate-900">{session.workout_name}</p>

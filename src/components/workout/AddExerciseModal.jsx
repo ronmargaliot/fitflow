@@ -10,14 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Timer, Hash } from 'lucide-react';
 import ImageUpload from '@/components/common/ImageUpload';
 
 export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) {
   const [exercise, setExercise] = useState({
     name: '',
+    exercise_type: 'reps',
     sets: 3,
     reps: '8',
+    duration_seconds: 30,
     rest: defaultRest || 90,
     weight: 0,
     notes: '',
@@ -35,8 +38,10 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
     
     setExercise({
       name: '',
+      exercise_type: 'reps',
       sets: 3,
       reps: '8',
+      duration_seconds: 30,
       rest: defaultRest || 90,
       weight: 0,
       notes: '',
@@ -64,7 +69,27 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
               autoFocus
             />
           </div>
-          
+
+          <div>
+            <Label>Exercise Type</Label>
+            <Tabs 
+              value={exercise.exercise_type} 
+              onValueChange={(v) => setExercise({ ...exercise, exercise_type: v })}
+              className="mt-2"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="reps" className="flex items-center gap-2">
+                  <Hash className="w-4 h-4" />
+                  Rep-based
+                </TabsTrigger>
+                <TabsTrigger value="time" className="flex items-center gap-2">
+                  <Timer className="w-4 h-4" />
+                  Time-based
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="sets">Sets</Label>
@@ -76,16 +101,30 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
                 className="mt-1"
               />
             </div>
-            <div>
-              <Label htmlFor="reps">Reps</Label>
-              <Input
-                id="reps"
-                value={exercise.reps}
-                onChange={(e) => setExercise({ ...exercise, reps: e.target.value })}
-                className="mt-1"
-                placeholder="8 or 30s"
-              />
-            </div>
+            {exercise.exercise_type === 'reps' ? (
+              <div>
+                <Label htmlFor="reps">Reps</Label>
+                <Input
+                  id="reps"
+                  value={exercise.reps}
+                  onChange={(e) => setExercise({ ...exercise, reps: e.target.value })}
+                  className="mt-1"
+                  placeholder="8"
+                />
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="duration">Duration (s)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={exercise.duration_seconds}
+                  onChange={(e) => setExercise({ ...exercise, duration_seconds: parseInt(e.target.value) || 30 })}
+                  className="mt-1"
+                  placeholder="30"
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="rest">Rest (s)</Label>
               <Input

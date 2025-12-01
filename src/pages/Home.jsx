@@ -36,7 +36,7 @@ export default function Home() {
     staleTime: 10000
   });
 
-  const { getLikesForWorkout, allLikes } = useBulkLikes();
+  const { getLikesForWorkout, allLikes = [] } = useBulkLikes();
 
   // Filter workouts based on tab and filters
   const myWorkouts = allWorkouts.filter(w => w.created_by === currentUser?.email);

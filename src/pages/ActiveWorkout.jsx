@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import UndoToast from '@/components/workout/UndoToast';
 import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
+import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal';
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -56,6 +57,9 @@ export default function ActiveWorkout() {
   
   // Time-based exercise state
   const [isTimerActive, setIsTimerActive] = useState(false);
+  
+  // Demo modal state
+  const [demoExercise, setDemoExercise] = useState(null);
 
   const { data: workout, isLoading: workoutLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -633,11 +637,26 @@ export default function ActiveWorkout() {
                           </div>
                           
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge className={`${
-                              isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
-                            }`}>
-                              {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
-                            </Badge>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDemoExercise(exercise);
+                              }}
+                              className="flex items-center gap-1.5 group/demo"
+                            >
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                isActive 
+                                  ? 'bg-white/20 group-hover/demo:bg-white/30' 
+                                  : 'bg-slate-600 group-hover/demo:bg-slate-500'
+                              }`}>
+                                <Play className="w-3 h-3 text-white" />
+                              </div>
+                              <Badge className={`${
+                                isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
+                              }`}>
+                                {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
+                              </Badge>
+                            </button>
                             
                             {exercise.rest && (
                               <Badge variant="outline" className="text-slate-400 border-slate-600">
@@ -736,6 +755,13 @@ export default function ActiveWorkout() {
           )}
         </div>
       </div>
+
+      {/* Exercise Demo Modal */}
+      <ExerciseDemoModal
+        open={!!demoExercise}
+        onClose={() => setDemoExercise(null)}
+        exercise={demoExercise}
+      />
 
       {/* Undo Toast */}
       <UndoToast

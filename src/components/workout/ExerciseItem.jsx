@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, Timer, Hash } from 'lucide-react';
+import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, Timer, Hash, Play } from 'lucide-react';
+import ExerciseDemoModal from './ExerciseDemoModal';
 import { motion } from 'framer-motion';
 
 export default function ExerciseItem({ 
@@ -17,6 +18,7 @@ export default function ExerciseItem({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(exercise);
+  const [showDemo, setShowDemo] = useState(false);
 
   const handleSave = () => {
     onUpdate(editData);
@@ -184,9 +186,20 @@ export default function ExerciseItem({
               </div>
               
               <div className="flex flex-wrap items-center gap-2">
-                <Badge className={`${exercise.exercise_type === 'time' ? 'bg-green-600' : 'bg-slate-900'} text-white hover:opacity-90`}>
-                  {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
-                </Badge>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDemo(true);
+                  }}
+                  className="flex items-center gap-1 group/demo"
+                >
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center group-hover/demo:bg-indigo-100 transition-colors">
+                    <Play className="w-3 h-3 text-slate-500 group-hover/demo:text-indigo-600" />
+                  </div>
+                  <Badge className={`${exercise.exercise_type === 'time' ? 'bg-green-600' : 'bg-slate-900'} text-white hover:opacity-90`}>
+                    {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
+                  </Badge>
+                </button>
                 
                 {exercise.rest && (
                   <Badge variant="outline" className="text-slate-600 border-slate-300">
@@ -234,6 +247,12 @@ export default function ExerciseItem({
           </div>
         </div>
       </Card>
+      
+      <ExerciseDemoModal
+        open={showDemo}
+        onClose={() => setShowDemo(false)}
+        exercise={exercise}
+      />
     </motion.div>
   );
 }

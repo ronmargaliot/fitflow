@@ -251,6 +251,8 @@ export default function ActiveWorkout() {
   };
 
   const handleCompleteSet = useCallback(() => {
+    if (!currentExercise) return;
+    
     const exerciseId = currentExercise.id;
     
     // Save state for undo
@@ -370,7 +372,7 @@ export default function ActiveWorkout() {
     );
   }
 
-  if (!workout || !currentExercise) {
+  if (!workout || exercises.length === 0) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center text-white">
@@ -427,7 +429,7 @@ export default function ActiveWorkout() {
 
       {/* Rest Timer - Floating */}
       <AnimatePresence>
-        {isResting && (
+        {isResting && currentExercise && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -721,40 +723,42 @@ export default function ActiveWorkout() {
       </main>
 
       {/* Sticky Bottom Action */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-4 z-20">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-sm text-slate-400">Current Exercise</p>
-              <p className="text-white font-semibold">{currentExercise.name}</p>
+      {currentExercise && (
+        <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-4 z-20">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm text-slate-400">Current Exercise</p>
+                <p className="text-white font-semibold">{currentExercise.name}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-slate-400">Set</p>
+                <p className="text-white font-semibold">{currentSet} of {currentExercise.sets}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-slate-400">Set</p>
-              <p className="text-white font-semibold">{currentSet} of {currentExercise.sets}</p>
-            </div>
+            
+            {currentExercise.exercise_type === 'time' ? (
+              <ActiveExerciseTimer
+                duration={currentExercise.duration_seconds || 30}
+                isActive={!isResting}
+                onComplete={handleTimerComplete}
+                onStart={() => setIsTimerActive(true)}
+                onPause={() => setIsTimerActive(false)}
+              />
+            ) : (
+              <Button
+                size="lg"
+                className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
+                onClick={handleCompleteSet}
+                disabled={isResting}
+              >
+                <Check className="w-5 h-5 mr-2" />
+                Complete Set {currentSet}
+              </Button>
+            )}
           </div>
-          
-          {currentExercise.exercise_type === 'time' ? (
-            <ActiveExerciseTimer
-              duration={currentExercise.duration_seconds || 30}
-              isActive={!isResting}
-              onComplete={handleTimerComplete}
-              onStart={() => setIsTimerActive(true)}
-              onPause={() => setIsTimerActive(false)}
-            />
-          ) : (
-            <Button
-              size="lg"
-              className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
-              onClick={handleCompleteSet}
-              disabled={isResting}
-            >
-              <Check className="w-5 h-5 mr-2" />
-              Complete Set {currentSet}
-            </Button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Exercise Demo Modal */}
       <ExerciseDemoModal

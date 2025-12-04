@@ -15,10 +15,10 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (open && exercise && !exercise.demo_image) {
+    if (open && exercise && !exercise.demo_image && !generatedImage) {
       generateDemoImage();
     }
-  }, [open, exercise?.id]);
+  }, [open, exercise?.id, exercise?.demo_image]);
 
   const generateDemoImage = async () => {
     if (!exercise) return;

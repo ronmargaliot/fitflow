@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { 
   ArrowLeft, Loader2, Check, SkipForward, 
   Clock, Weight, MessageSquare, Pencil, X, Save,
-  Timer, Flag
+  Timer, Flag, Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';

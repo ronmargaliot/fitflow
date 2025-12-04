@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import UndoToast from '@/components/workout/UndoToast';
 import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
-import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal.js';
+import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal';
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);

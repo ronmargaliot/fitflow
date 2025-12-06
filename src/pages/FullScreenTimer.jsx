@@ -80,26 +80,22 @@ export default function FullScreenTimer() {
   const handlePhaseComplete = () => {
     if (isResting) {
       // Rest complete, start next work phase
-      if (completedSets < totalSets) {
-        setIsResting(false);
-        setTimeLeft(workDuration);
-        setCurrentSet(prev => prev + 1);
-        setCompletedSets(prev => prev + 1);
-        setIsActive(true);
-      } else {
-        // All sets complete
-        handleExerciseComplete();
-      }
+      setIsResting(false);
+      setTimeLeft(workDuration);
+      setIsActive(true);
     } else {
-      // Work phase complete
+      // Work phase complete - mark current set as done
+      const newCompletedSets = completedSets + 1;
+      setCompletedSets(newCompletedSets);
+      
       if (currentSet < totalSets) {
-        // Start rest
+        // More sets to go - start rest
         setIsResting(true);
         setTimeLeft(restDuration);
+        setCurrentSet(currentSet + 1);
         setIsActive(true);
       } else {
         // Last set complete
-        setCompletedSets(totalSets);
         handleExerciseComplete();
       }
     }

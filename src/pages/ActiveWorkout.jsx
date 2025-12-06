@@ -778,6 +778,7 @@ export default function ActiveWorkout() {
         exercise={currentExercise}
         currentSet={currentSet}
         totalSets={currentExercise?.sets || 0}
+        workout={workout}
         onComplete={handleCompleteSet}
         onClose={() => setShowTimerModal(false)}
       />

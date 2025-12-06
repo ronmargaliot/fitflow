@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Pause, SkipForward, Volume2, VolumeX } from 'lucide-react';
 
-export default function FullScreenTimerModal({ open, exercise, currentSet, totalSets, onComplete, onClose }) {
+export default function FullScreenTimerModal({ open, exercise, currentSet: startSet, totalSets, onComplete, onClose, workout }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isResting, setIsResting] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [currentSetInModal, setCurrentSetInModal] = useState(startSet);
 
   const workDuration = exercise?.duration_seconds || 30;
-  const restDuration = exercise?.rest || 15;
+  const shortRestDuration = exercise?.rest || 15;
+  const longRestDuration = workout?.rest_between_exercises || 120;
 
   // Initialize timer when modal opens
   useEffect(() => {
@@ -20,10 +22,11 @@ export default function FullScreenTimerModal({ open, exercise, currentSet, total
       setInitialized(true);
       setIsResting(false);
       setIsActive(false);
+      setCurrentSetInModal(startSet);
     } else if (!open) {
       setInitialized(false);
     }
-  }, [open, exercise, workDuration, initialized]);
+  }, [open, exercise, workDuration, initialized, startSet]);
 
   // Timer countdown
   useEffect(() => {
@@ -62,18 +65,25 @@ export default function FullScreenTimerModal({ open, exercise, currentSet, total
       // Rest complete, start next work phase
       setIsResting(false);
       setTimeLeft(workDuration);
+      setCurrentSetInModal(prev => prev + 1);
       setIsActive(true);
     } else {
       // Work phase complete
-      if (currentSet < totalSets) {
-        // Start rest before next set
+      if (currentSetInModal < totalSets) {
+        // Not the last set - use short rest
         setIsResting(true);
-        setTimeLeft(restDuration);
+        setTimeLeft(shortRestDuration);
         setIsActive(true);
       } else {
-        // Last set complete - close modal and notify parent
-        onComplete();
-        onClose();
+        // Last set complete - use long rest (between exercises)
+        setIsResting(true);
+        setTimeLeft(longRestDuration);
+        setIsActive(true);
+        // After this rest, we'll close
+        setTimeout(() => {
+          onComplete();
+          onClose();
+        }, (longRestDuration + 1) * 1000);
       }
     }
   };
@@ -89,6 +99,7 @@ export default function FullScreenTimerModal({ open, exercise, currentSet, total
 
   if (!open || !exercise) return null;
 
+  const restDuration = currentSetInModal >= totalSets ? longRestDuration : shortRestDuration;
   const progress = isResting 
     ? ((restDuration - timeLeft) / restDuration) * 100
     : ((workDuration - timeLeft) / workDuration) * 100;
@@ -138,7 +149,7 @@ export default function FullScreenTimerModal({ open, exercise, currentSet, total
               
               <div className="text-center">
                 <p className="text-white/80 text-sm font-medium">
-                  Set {currentSet} of {totalSets}
+                  Set {currentSetInModal} of {totalSets}
                 </p>
               </div>
 

@@ -60,6 +60,7 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -218,13 +219,16 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
           </DialogFooter>
         </form>
       </DialogContent>
-      
+    </Dialog>
+    
+    {showVideoSearch && (
       <VideoSearchModal
-        open={showVideoSearch}
+        open={true}
         onClose={() => setShowVideoSearch(false)}
         onSelect={handleVideoSelect}
         exerciseName={exercise.name}
       />
-    </Dialog>
+    )}
+    </>
   );
 }

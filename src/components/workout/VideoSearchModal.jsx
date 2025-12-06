@@ -75,8 +75,8 @@ Return ONLY a JSON array with this exact structure:
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose} modal={true}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Youtube className="w-5 h-5 text-red-600" />

@@ -182,6 +182,7 @@ export default function ExerciseItem({
   }
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -283,13 +284,16 @@ export default function ExerciseItem({
         onClose={() => setShowDemo(false)}
         exercise={exercise}
       />
-      
+      </motion.div>
+
+      {showVideoSearch && (
       <VideoSearchModal
-        open={showVideoSearch}
+        open={true}
         onClose={() => setShowVideoSearch(false)}
         onSelect={handleVideoSelect}
         exerciseName={editData.name}
       />
-    </motion.div>
-  );
-}
+      )}
+      </>
+      );
+      }

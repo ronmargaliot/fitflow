@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';

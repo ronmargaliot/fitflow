@@ -68,15 +68,16 @@ export default function FullScreenTimerModal({ open, exercise, currentSet: start
       setCurrentSetInModal(prev => prev + 1);
       setIsActive(true);
     } else {
-      // Work phase complete
+      // Work phase just completed - mark it in parent
+      onComplete();
+      
       if (currentSetInModal < totalSets) {
-        // Not the last set - use short rest
+        // Not the last set - use short rest in modal
         setIsResting(true);
         setTimeLeft(shortRestDuration);
         setIsActive(true);
       } else {
-        // Last set complete - close modal and let parent handle rest
-        onComplete();
+        // Last set complete - close modal and let parent handle rest between exercises
         onClose();
       }
     }

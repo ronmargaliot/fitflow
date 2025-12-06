@@ -150,7 +150,11 @@ export default function ExerciseItem({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setShowVideoSearch(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowVideoSearch(true);
+                }}
               >
                 <Search className="w-4 h-4" />
               </Button>
@@ -275,15 +279,17 @@ export default function ExerciseItem({
         exercise={exercise}
       />
       
-      <VideoSearchModal
-        open={showVideoSearch}
-        onClose={() => setShowVideoSearch(false)}
-        onSelect={(url) => {
-          setEditData({ ...editData, demo_video: url });
-          setShowVideoSearch(false);
-        }}
-        exerciseName={editData.name}
-      />
+      {showVideoSearch && (
+        <VideoSearchModal
+          open={showVideoSearch}
+          onClose={() => setShowVideoSearch(false)}
+          onSelect={(url) => {
+            setEditData({ ...editData, demo_video: url });
+            setShowVideoSearch(false);
+          }}
+          exerciseName={editData.name}
+        />
+      )}
     </motion.div>
   );
 }

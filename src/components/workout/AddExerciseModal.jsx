@@ -189,7 +189,11 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowVideoSearch(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowVideoSearch(true);
+                }}
                 disabled={!exercise.name}
               >
                 <Search className="w-4 h-4" />
@@ -210,15 +214,17 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
         </form>
       </DialogContent>
       
-      <VideoSearchModal
-        open={showVideoSearch}
-        onClose={() => setShowVideoSearch(false)}
-        onSelect={(url) => {
-          setExercise({ ...exercise, demo_video: url });
-          setShowVideoSearch(false);
-        }}
-        exerciseName={exercise.name}
-      />
+      {showVideoSearch && (
+        <VideoSearchModal
+          open={showVideoSearch}
+          onClose={() => setShowVideoSearch(false)}
+          onSelect={(url) => {
+            setExercise({ ...exercise, demo_video: url });
+            setShowVideoSearch(false);
+          }}
+          exerciseName={exercise.name}
+        />
+      )}
     </Dialog>
   );
 }

@@ -17,11 +17,11 @@ const TIME_RANGES = [
   { value: 'all', label: 'All Time' },
 ];
 
-export default function ProgressFilters({ filters, onFilterChange, workouts = [] }) {
-  const hasActiveFilters = filters.timeRange !== 'all' || filters.workoutId;
+export default function ProgressFilters({ filters, onFilterChange, workouts = [], exercises = [] }) {
+  const hasActiveFilters = filters.timeRange !== 'all' || filters.workoutId || filters.exerciseName;
 
   const clearFilters = () => {
-    onFilterChange({ timeRange: 'all', workoutId: '' });
+    onFilterChange({ timeRange: 'all', workoutId: '', exerciseName: '' });
   };
 
   return (
@@ -46,7 +46,7 @@ export default function ProgressFilters({ filters, onFilterChange, workouts = []
       {workouts.length > 0 && (
         <Select 
           value={filters.workoutId || ''} 
-          onValueChange={(v) => onFilterChange({ ...filters, workoutId: v })}
+          onValueChange={(v) => onFilterChange({ ...filters, workoutId: v, exerciseName: '' })}
         >
           <SelectTrigger className="w-[160px] h-9 text-sm">
             <SelectValue placeholder="All Workouts" />
@@ -55,6 +55,23 @@ export default function ProgressFilters({ filters, onFilterChange, workouts = []
             <SelectItem value={null}>All Workouts</SelectItem>
             {workouts.map((w) => (
               <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {exercises.length > 0 && (
+        <Select 
+          value={filters.exerciseName || ''} 
+          onValueChange={(v) => onFilterChange({ ...filters, exerciseName: v })}
+        >
+          <SelectTrigger className="w-[160px] h-9 text-sm">
+            <SelectValue placeholder="All Exercises" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={null}>All Exercises</SelectItem>
+            {exercises.map((ex) => (
+              <SelectItem key={ex} value={ex}>{ex}</SelectItem>
             ))}
           </SelectContent>
         </Select>

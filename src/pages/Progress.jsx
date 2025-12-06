@@ -29,12 +29,13 @@ import ProgressFilters from '@/components/progress/ProgressFilters';
 import VolumeChart from '@/components/progress/VolumeChart';
 import FrequencyCalendar from '@/components/progress/FrequencyCalendar';
 import WorkoutProgressCard from '@/components/progress/WorkoutProgressCard';
+import ExerciseProgressCard from '@/components/progress/ExerciseProgressCard';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
 
 export default function Progress() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [filters, setFilters] = useState({ timeRange: 'all', workoutId: '' });
+  const [filters, setFilters] = useState({ timeRange: 'all', workoutId: '', exerciseName: '' });
   const [deleteSessionId, setDeleteSessionId] = useState(null);
   const queryClient = useQueryClient();
 
@@ -69,6 +70,13 @@ export default function Progress() {
   const mySessions = sessions.filter(s => s.created_by === currentUser?.email);
   const myWorkouts = workouts.filter(w => w.created_by === currentUser?.email);
 
+  // Get unique exercises
+  const allExercises = [...new Set(
+    mySessions.flatMap(s => 
+      (s.exercises_completed || []).map(ex => ex.name)
+    )
+  )].sort();
+
   // Apply filters
   const getFilteredSessions = () => {
     let filtered = [...mySessions];
@@ -96,6 +104,13 @@ export default function Progress() {
     // Workout filter
     if (filters.workoutId) {
       filtered = filtered.filter(s => s.workout_id === filters.workoutId);
+    }
+
+    // Exercise filter
+    if (filters.exerciseName) {
+      filtered = filtered.filter(s => 
+        s.exercises_completed?.some(ex => ex.name === filters.exerciseName)
+      );
     }
     
     return filtered;
@@ -204,6 +219,7 @@ export default function Progress() {
             filters={filters} 
             onFilterChange={setFilters}
             workouts={myWorkouts}
+            exercises={allExercises}
           />
         </div>
       </header>
@@ -346,8 +362,22 @@ export default function Progress() {
           </Card>
         </motion.div>
 
+        {/* Exercise-specific Progress */}
+        {filters.exerciseName && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <ExerciseProgressCard
+              exerciseName={filters.exerciseName}
+              sessions={filteredSessions}
+            />
+          </motion.div>
+        )}
+
         {/* Workout-specific Progress */}
-        {myWorkouts.length > 0 && (
+        {!filters.exerciseName && myWorkouts.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

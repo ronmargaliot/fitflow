@@ -18,9 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from 'lucide-react';
+import { Check, X, Sparkles } from 'lucide-react';
 import { CATEGORIES, BODY_AREAS, DIFFICULTIES } from './WorkoutFilters';
 import ImageUpload from '@/components/common/ImageUpload';
+import AIWorkoutGenerator from './AIWorkoutGenerator';
 
 const COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', 
@@ -28,6 +29,7 @@ const COLORS = [
 ];
 
 export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [data, setData] = useState({
     name: '',
     description: '',
@@ -87,13 +89,34 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
     onClose();
   };
 
+  const handleAIGenerate = (aiWorkoutData) => {
+    onSave(aiWorkoutData);
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            {workout ? 'Edit Workout' : 'Create New Workout'}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl">
+              {workout ? 'Edit Workout' : 'Create New Workout'}
+            </DialogTitle>
+            {!workout && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  setShowAIGenerator(true);
+                }}
+                className="border-purple-200 text-purple-600 hover:bg-purple-50"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI Generate
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

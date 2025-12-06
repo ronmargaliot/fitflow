@@ -142,7 +142,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                 <span>{totalSets} sets</span>
               </div>
               
-              {showCommunityBadge && !isOwner && (
+              {!isOwner && (
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"

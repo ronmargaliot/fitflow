@@ -160,10 +160,9 @@ export default function Landing() {
           {categories.map((cat) => (
             <Button
               key={cat.value}
-              variant="outline"
               size="lg"
               onClick={handleLogin}
-              className="border-white/30 text-white hover:bg-white/10 backdrop-blur font-semibold"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur border-2 border-white/40 text-white font-semibold shadow-lg"
             >
               <span className="mr-2">{CATEGORY_ICONS[cat.value]}</span>
               {cat.label}

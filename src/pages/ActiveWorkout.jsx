@@ -738,7 +738,10 @@ export default function ActiveWorkout() {
             </div>
             
             {currentExercise.exercise_type === 'time' ? (
-              <Link to={createPageUrl(`FullScreenTimer?id=${workoutId}&exerciseIndex=${currentExerciseIndex}`)}>
+              <Link 
+                to={createPageUrl(`FullScreenTimer?id=${workoutId}&exerciseIndex=${currentExerciseIndex}&set=${currentSet}`)}
+                className="block"
+              >
                 <Button
                   size="lg"
                   className="w-full h-14 text-lg bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-xl"

@@ -11,15 +11,16 @@ export default function FullScreenTimer() {
   const urlParams = new URLSearchParams(window.location.search);
   const workoutId = urlParams.get('id');
   const exerciseIndex = parseInt(urlParams.get('exerciseIndex') || '0');
+  const startSet = parseInt(urlParams.get('set') || '1');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [currentSet, setCurrentSet] = useState(1);
+  const [currentSet, setCurrentSet] = useState(startSet);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isResting, setIsResting] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [completedSets, setCompletedSets] = useState(0);
+  const [completedSets, setCompletedSets] = useState(startSet - 1);
   const [initialized, setInitialized] = useState(false);
 
   const { data: workout } = useQuery({

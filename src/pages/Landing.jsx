@@ -209,14 +209,23 @@ export default function Landing() {
                     className="bg-white/10 backdrop-blur border-white/20 overflow-hidden hover:bg-white/15 transition-all cursor-pointer group"
                     onClick={handleLogin}
                   >
-                    <div className="h-40 overflow-hidden bg-slate-800">
-                      {workout.cover_image && (
+                    <div className="h-40 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900 relative">
+                      {workout.cover_image ? (
                         <img 
                           src={workout.cover_image} 
                           alt={workout.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          onError={(e) => { e.target.style.display = 'none'; }}
+                          onError={(e) => { 
+                            e.target.style.display = 'none';
+                            e.target.parentElement.style.background = 'linear-gradient(to bottom right, rgb(51 65 85), rgb(15 23 42))';
+                          }}
                         />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-6xl opacity-50">
+                            {CATEGORY_ICONS[workout.category] || '💪'}
+                          </span>
+                        </div>
                       )}
                     </div>
                     <div className="p-5">

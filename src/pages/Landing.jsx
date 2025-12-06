@@ -209,16 +209,16 @@ export default function Landing() {
                     className="bg-white/10 backdrop-blur border-white/20 overflow-hidden hover:bg-white/15 transition-all cursor-pointer group"
                     onClick={handleLogin}
                   >
-                    {workout.cover_image && (
-                      <div className="h-40 overflow-hidden bg-slate-800">
+                    <div className="h-40 overflow-hidden bg-slate-800">
+                      {workout.cover_image && (
                         <img 
                           src={workout.cover_image} 
                           alt={workout.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                           onError={(e) => { e.target.style.display = 'none'; }}
                         />
-                      </div>
-                    )}
+                      )}
+                    </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="font-bold text-white text-lg line-clamp-1">{workout.name}</h3>

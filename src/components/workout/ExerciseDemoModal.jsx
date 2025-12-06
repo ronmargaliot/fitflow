@@ -15,21 +15,13 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Reset state when exercise changes
-    if (!open) {
-      setGeneratedImage(null);
-      setError(null);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (open && exercise && !exercise.demo_image && !generatedImage && !isGenerating) {
+    if (open && exercise && !exercise.demo_image) {
       generateDemoImage();
     }
   }, [open, exercise?.id]);
 
   const generateDemoImage = async () => {
-    if (!exercise || isGenerating) return;
+    if (!exercise || exercise.demo_video) return;
     
     setIsGenerating(true);
     setError(null);
@@ -41,8 +33,6 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
       
       if (result?.url) {
         setGeneratedImage(result.url);
-      } else {
-        setError('Could not generate demo');
       }
     } catch (err) {
       console.error('Failed to generate image:', err);
@@ -51,11 +41,18 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
       setIsGenerating(false);
     }
   };
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return null;
+    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/)?.[1];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+  };
   
   if (!exercise) return null;
   
   const demoUrl = exercise.demo_image || generatedImage;
   const isTimeBased = exercise.exercise_type === 'time';
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(exercise.demo_video);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -73,9 +70,16 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Demo Animation */}
+          {/* Demo Video/Animation */}
           <div className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden">
-            {isGenerating ? (
+            {youtubeEmbedUrl ? (
+              <iframe
+                src={youtubeEmbedUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : isGenerating ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-2" />

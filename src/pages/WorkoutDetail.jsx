@@ -37,6 +37,7 @@ import CommentSection from '@/components/social/CommentSection';
 import { useLikes } from '@/components/social/useLikes';
 import { Skeleton } from "@/components/ui/skeleton";
 import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
+import { Wand2, Copy as CopyIcon } from 'lucide-react';
 
 export default function WorkoutDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -241,6 +242,14 @@ export default function WorkoutDetail() {
                 loading={likeLoading}
                 size="sm"
               />
+              <Badge variant="outline" className="border-slate-300">
+                <CopyIcon className="w-3 h-3 mr-1" />
+                {workout.copy_count || 0}
+              </Badge>
+              <Badge variant="outline" className="border-slate-300">
+                <Wand2 className="w-3 h-3 mr-1" />
+                {workout.ai_inspo_count || 0}
+              </Badge>
               <Link to={createPageUrl(`ActiveWorkout?id=${workoutId}`)}>
                 <Button className="bg-slate-900 hover:bg-slate-800 shadow-lg">
                   <Play className="w-4 h-4 mr-2" />

@@ -75,15 +75,9 @@ export default function FullScreenTimerModal({ open, exercise, currentSet: start
         setTimeLeft(shortRestDuration);
         setIsActive(true);
       } else {
-        // Last set complete - use long rest (between exercises)
-        setIsResting(true);
-        setTimeLeft(longRestDuration);
-        setIsActive(true);
-        // After this rest, we'll close
-        setTimeout(() => {
-          onComplete();
-          onClose();
-        }, (longRestDuration + 1) * 1000);
+        // Last set complete - close modal and let parent handle rest
+        onComplete();
+        onClose();
       }
     }
   };

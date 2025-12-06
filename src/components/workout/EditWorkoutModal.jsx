@@ -95,7 +95,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -268,13 +268,13 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
 
-    <AIWorkoutGenerator
-      open={showAIGenerator}
-      onClose={() => setShowAIGenerator(false)}
-      onGenerate={handleAIGenerate}
-    />
+      <AIWorkoutGenerator
+        open={showAIGenerator}
+        onClose={() => setShowAIGenerator(false)}
+        onGenerate={handleAIGenerate}
+      />
     </>
   );
 }

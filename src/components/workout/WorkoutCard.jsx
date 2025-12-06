@@ -84,18 +84,18 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
 
             {/* Stats badges */}
             <div className="absolute top-2 right-2 flex gap-1">
-              {(likeData?.likeCount || 0) > 0 && (
-                <Badge className="bg-white/90 text-red-500 text-xs">
-                  <Heart className={`w-3 h-3 mr-1 ${likeData?.isLiked ? 'fill-current' : ''}`} />
-                  {likeData.likeCount}
-                </Badge>
-              )}
-              {(workout.copy_count || 0) > 0 && (
-                <Badge className="bg-white/90 text-slate-700 text-xs">
-                  <Copy className="w-3 h-3 mr-1" />
-                  {workout.copy_count}
-                </Badge>
-              )}
+              <Badge className="bg-white/90 text-red-500 text-xs">
+                <Heart className={`w-3 h-3 mr-1 ${likeData?.isLiked ? 'fill-current' : ''}`} />
+                {likeData?.likeCount || 0}
+              </Badge>
+              <Badge className="bg-white/90 text-slate-700 text-xs">
+                <Copy className="w-3 h-3 mr-1" />
+                {workout.copy_count || 0}
+              </Badge>
+              <Badge className="bg-white/90 text-purple-600 text-xs">
+                <Sparkles className="w-3 h-3 mr-1" />
+                {workout.ai_inspo_count || 0}
+              </Badge>
             </div>
 
             {/* Title on image */}

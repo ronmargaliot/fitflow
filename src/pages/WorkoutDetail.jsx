@@ -154,7 +154,10 @@ export default function WorkoutDetail() {
     updateMutation.mutate(data);
   };
 
-  const handleAIInspiration = (aiWorkoutData) => {
+  const handleAIInspiration = async (aiWorkoutData) => {
+    await updateMutation.mutateAsync({
+      ai_inspo_count: (workout.ai_inspo_count || 0) + 1
+    });
     createMutation.mutate({
       ...aiWorkoutData,
       original_workout_id: workoutId,

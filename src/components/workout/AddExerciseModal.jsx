@@ -24,7 +24,8 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
     rest: defaultRest || 90,
     weight: 0,
     notes: '',
-    demo_image: ''
+    demo_image: '',
+    demo_video: ''
   });
 
   const handleSubmit = (e) => {
@@ -45,7 +46,8 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
       rest: defaultRest || 90,
       weight: 0,
       notes: '',
-      demo_image: ''
+      demo_image: '',
+      demo_video: ''
     });
     onClose();
   };
@@ -161,27 +163,28 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="notes">Notes - optional</Label>
-              <Textarea
-                id="notes"
-                value={exercise.notes}
-                onChange={(e) => setExercise({ ...exercise, notes: e.target.value })}
-                className="mt-1"
-                placeholder="Any additional notes..."
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label>Demo Image - optional</Label>
-              <ImageUpload
-                value={exercise.demo_image}
-                onChange={(url) => setExercise({ ...exercise, demo_image: url })}
-                className="mt-1 h-20"
-                placeholder="Add demo"
-              />
-            </div>
+          <div>
+            <Label htmlFor="notes">Notes - optional</Label>
+            <Textarea
+              id="notes"
+              value={exercise.notes}
+              onChange={(e) => setExercise({ ...exercise, notes: e.target.value })}
+              className="mt-1"
+              placeholder="Any additional notes..."
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="video">YouTube Video URL - optional</Label>
+            <Input
+              id="video"
+              value={exercise.demo_video}
+              onChange={(e) => setExercise({ ...exercise, demo_video: e.target.value })}
+              className="mt-1"
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            <p className="text-xs text-slate-500 mt-1">Add a YouTube video showing how to perform this exercise</p>
           </div>
           
           <DialogFooter>

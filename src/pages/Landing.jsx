@@ -22,6 +22,17 @@ const CATEGORY_ICONS = {
   crossfit: '🔥'
 };
 
+const DEFAULT_IMAGES = {
+  strength: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400&h=200&fit=crop',
+  cardio: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&h=200&fit=crop',
+  hiit: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=400&h=200&fit=crop',
+  yoga: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=200&fit=crop',
+  stretching: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=400&h=200&fit=crop',
+  calisthenics: 'https://images.unsplash.com/photo-1598971639058-a5e8e2d39e72?w=400&h=200&fit=crop',
+  crossfit: 'https://images.unsplash.com/photo-1533681904393-9ab6ebed4d63?w=400&h=200&fit=crop',
+  default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
+};
+
 export default function Landing() {
   const navigate = useNavigate();
 
@@ -198,6 +209,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {trendingWorkouts.map((workout, index) => {
               const likeData = getLikesForWorkout(workout.id, null);
+              const coverImage = workout.cover_image || DEFAULT_IMAGES[workout.category] || DEFAULT_IMAGES.default;
               return (
                 <motion.div
                   key={workout.id}
@@ -210,23 +222,14 @@ export default function Landing() {
                     onClick={handleLogin}
                   >
                     <div className="h-40 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900 relative">
-                      {workout.cover_image ? (
-                        <img 
-                          src={workout.cover_image} 
-                          alt={workout.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          onError={(e) => { 
-                            e.target.style.display = 'none';
-                            e.target.parentElement.style.background = 'linear-gradient(to bottom right, rgb(51 65 85), rgb(15 23 42))';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-6xl opacity-50">
-                            {CATEGORY_ICONS[workout.category] || '💪'}
-                          </span>
-                        </div>
-                      )}
+                      <img 
+                        src={coverImage} 
+                        alt={workout.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => { 
+                          e.target.src = DEFAULT_IMAGES.default;
+                        }}
+                      />
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-3">

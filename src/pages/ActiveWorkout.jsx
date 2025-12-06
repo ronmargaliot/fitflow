@@ -27,6 +27,7 @@ import {
 import UndoToast from '@/components/workout/UndoToast';
 import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
 import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal';
+import FullScreenTimerModal from '@/components/workout/FullScreenTimerModal';
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -60,6 +61,9 @@ export default function ActiveWorkout() {
   
   // Demo modal state
   const [demoExercise, setDemoExercise] = useState(null);
+  
+  // Full screen timer modal state
+  const [showTimerModal, setShowTimerModal] = useState(false);
 
   const { data: workout, isLoading: workoutLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -738,18 +742,14 @@ export default function ActiveWorkout() {
             </div>
             
             {currentExercise.exercise_type === 'time' ? (
-              <Link 
-                to={createPageUrl(`FullScreenTimer?id=${workoutId}&exerciseIndex=${currentExerciseIndex}&set=${currentSet}`)}
-                className="block"
+              <Button
+                size="lg"
+                className="w-full h-14 text-lg bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-xl"
+                onClick={() => setShowTimerModal(true)}
               >
-                <Button
-                  size="lg"
-                  className="w-full h-14 text-lg bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-xl"
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Timer
-                </Button>
-              </Link>
+                <Play className="w-5 h-5 mr-2" />
+                Start Timer
+              </Button>
             ) : (
               <Button
                 size="lg"
@@ -770,6 +770,16 @@ export default function ActiveWorkout() {
         open={!!demoExercise}
         onClose={() => setDemoExercise(null)}
         exercise={demoExercise}
+      />
+
+      {/* Full Screen Timer Modal */}
+      <FullScreenTimerModal
+        open={showTimerModal}
+        exercise={currentExercise}
+        currentSet={currentSet}
+        totalSets={currentExercise?.sets || 0}
+        onComplete={handleCompleteSet}
+        onClose={() => setShowTimerModal(false)}
       />
 
       {/* Undo Toast */}

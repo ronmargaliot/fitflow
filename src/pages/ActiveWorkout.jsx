@@ -738,13 +738,15 @@ export default function ActiveWorkout() {
             </div>
             
             {currentExercise.exercise_type === 'time' ? (
-              <ActiveExerciseTimer
-                duration={currentExercise.duration_seconds || 30}
-                isActive={!isResting}
-                onComplete={handleTimerComplete}
-                onStart={() => setIsTimerActive(true)}
-                onPause={() => setIsTimerActive(false)}
-              />
+              <Link to={createPageUrl(`FullScreenTimer?id=${workoutId}&exerciseIndex=${currentExerciseIndex}`)}>
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-xl"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Start Timer
+                </Button>
+              </Link>
             ) : (
               <Button
                 size="lg"

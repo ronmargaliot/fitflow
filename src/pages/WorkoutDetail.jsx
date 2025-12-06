@@ -36,6 +36,7 @@ import LikeButton from '@/components/social/LikeButton';
 import CommentSection from '@/components/social/CommentSection';
 import { useLikes } from '@/components/social/useLikes';
 import { Skeleton } from "@/components/ui/skeleton";
+import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
 
 export default function WorkoutDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -46,6 +47,7 @@ export default function WorkoutDetail() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAIInspiration, setShowAIInspiration] = useState(false);
   const [exercises, setExercises] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -100,6 +102,15 @@ export default function WorkoutDetail() {
     }
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.Workout.create(data),
+    onSuccess: (newWorkout) => {
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      navigate(createPageUrl(`WorkoutDetail?id=${newWorkout.id}`));
+      toast.success('AI workout created!');
+    }
+  });
+
   const unShareMutation = useMutation({
     mutationFn: () => base44.entities.Workout.update(workoutId, { is_public: false }),
     onSuccess: () => {
@@ -141,6 +152,14 @@ export default function WorkoutDetail() {
 
   const handleEditWorkout = (data) => {
     updateMutation.mutate(data);
+  };
+
+  const handleAIInspiration = (aiWorkoutData) => {
+    createMutation.mutate({
+      ...aiWorkoutData,
+      original_workout_id: workoutId,
+      original_creator: workout.created_by
+    });
   };
 
   if (isLoading) {
@@ -237,6 +256,10 @@ export default function WorkoutDetail() {
                       <DropdownMenuItem onClick={() => setShowEditModal(true)}>
                         <Settings className="w-4 h-4 mr-2" />
                         Edit Workout
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowAIInspiration(true)}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Use as AI Inspiration
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {workout.is_public ? (
@@ -349,6 +372,13 @@ export default function WorkoutDetail() {
         onClose={() => setShowEditModal(false)}
         workout={workout}
         onSave={handleEditWorkout}
+      />
+
+      <AIWorkoutGenerator
+        open={showAIInspiration}
+        onClose={() => setShowAIInspiration(false)}
+        onGenerate={handleAIInspiration}
+        inspirationWorkout={workout}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

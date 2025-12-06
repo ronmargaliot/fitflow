@@ -246,5 +246,12 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
         </form>
       </DialogContent>
     </Dialog>
+
+    <AIWorkoutGenerator
+      open={showAIGenerator}
+      onClose={() => setShowAIGenerator(false)}
+      onGenerate={handleAIGenerate}
+    />
+    </>
   );
 }

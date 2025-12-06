@@ -79,7 +79,7 @@ export default function Landing() {
             </div>
             <span className="text-white font-bold text-xl">FitTrack</span>
           </div>
-          <Button onClick={handleLogin} className="bg-white text-slate-900 hover:bg-slate-100">
+          <Button onClick={handleLogin} className="bg-white text-slate-900 hover:bg-slate-100 font-semibold">
             Sign In
           </Button>
         </nav>
@@ -111,15 +111,15 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 onClick={handleLogin}
-                className="bg-white text-slate-900 hover:bg-slate-100 shadow-2xl text-lg px-8 h-14"
+                className="bg-white text-slate-900 hover:bg-slate-100 shadow-2xl text-lg px-8 h-14 font-bold"
               >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               <Button 
                 size="lg" 
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 backdrop-blur text-lg px-8 h-14"
+                onClick={handleLogin}
+                className="border-2 border-white text-white hover:bg-white/20 backdrop-blur text-lg px-8 h-14 font-bold"
               >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Try AI Generator
@@ -163,7 +163,7 @@ export default function Landing() {
               variant="outline"
               size="lg"
               onClick={handleLogin}
-              className="border-white/30 text-white hover:bg-white/10 backdrop-blur"
+              className="border-white/30 text-white hover:bg-white/10 backdrop-blur font-semibold"
             >
               <span className="mr-2">{CATEGORY_ICONS[cat.value]}</span>
               {cat.label}
@@ -211,11 +211,12 @@ export default function Landing() {
                     onClick={handleLogin}
                   >
                     {workout.cover_image && (
-                      <div className="h-40 overflow-hidden">
+                      <div className="h-40 overflow-hidden bg-slate-800">
                         <img 
                           src={workout.cover_image} 
                           alt={workout.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          onError={(e) => { e.target.style.display = 'none'; }}
                         />
                       </div>
                     )}
@@ -286,7 +287,7 @@ export default function Landing() {
             <Button 
               size="lg"
               onClick={handleLogin}
-              className="bg-white text-indigo-600 hover:bg-slate-100 shadow-2xl text-lg px-8 h-14"
+              className="bg-white text-indigo-600 hover:bg-slate-100 shadow-2xl text-lg px-8 h-14 font-bold"
             >
               Start Free Today
               <ArrowRight className="w-5 h-5 ml-2" />

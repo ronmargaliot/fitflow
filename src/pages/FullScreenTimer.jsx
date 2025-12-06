@@ -20,6 +20,7 @@ export default function FullScreenTimer() {
   const [isResting, setIsResting] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [completedSets, setCompletedSets] = useState(0);
+  const [initialized, setInitialized] = useState(false);
 
   const { data: workout } = useQuery({
     queryKey: ['workout', workoutId],
@@ -35,12 +36,13 @@ export default function FullScreenTimer() {
   const workDuration = exercise?.duration_seconds || 30;
   const restDuration = exercise?.rest || 15;
 
-  // Initialize timer
+  // Initialize timer - only once when exercise loads
   useEffect(() => {
-    if (exercise && timeLeft === 0 && !isActive) {
+    if (exercise && !initialized) {
       setTimeLeft(workDuration);
+      setInitialized(true);
     }
-  }, [exercise, workDuration]);
+  }, [exercise, workDuration, initialized]);
 
   // Timer countdown
   useEffect(() => {

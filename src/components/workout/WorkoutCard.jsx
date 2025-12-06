@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Clock, Users, Copy, User, Heart } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -18,17 +18,21 @@ const DEFAULT_IMAGES = {
   default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
 };
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, likeData }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, likeData }) {
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
   const coverImage = workout.cover_image || DEFAULT_IMAGES[workout.category] || DEFAULT_IMAGES.default;
-
-  // Fixed card height for consistent grid
 
   const handleCopy = (e) => {
     e.preventDefault();
     e.stopPropagation();
     onCopy?.();
+  };
+
+  const handleAIInspire = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onAIInspire?.();
   };
 
   return (
@@ -139,15 +143,24 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
               </div>
               
               {showCommunityBadge && !isOwner && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={handleCopy}
-                >
-                  <Copy className="w-4 h-4 mr-1" />
-                  Copy
-                </Button>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCopy}
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                    onClick={handleAIInspire}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </Button>
+                </div>
               )}
             </div>
           </div>

@@ -13,6 +13,7 @@ import EditWorkoutModal from '@/components/workout/EditWorkoutModal';
 import WorkoutFilters from '@/components/workout/WorkoutFilters';
 import WorkoutCardSkeleton from '@/components/common/WorkoutCardSkeleton';
 import { useBulkLikes } from '@/components/social/useLikes';
+import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
 
 export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -20,6 +21,8 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ category: '', bodyArea: '', difficulty: '', sortBy: 'recent' });
+  const [showAIInspiration, setShowAIInspiration] = useState(false);
+  const [inspirationWorkout, setInspirationWorkout] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -140,6 +143,21 @@ export default function Home() {
     copyMutation.mutate(workout);
   };
 
+  const handleAIInspire = (workout) => {
+    setInspirationWorkout(workout);
+    setShowAIInspiration(true);
+  };
+
+  const handleAIGenerate = (aiWorkoutData) => {
+    createMutation.mutate({
+      ...aiWorkoutData,
+      original_workout_id: inspirationWorkout?.id,
+      original_creator: inspirationWorkout?.created_by
+    });
+    setShowAIInspiration(false);
+    setInspirationWorkout(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Header */}
@@ -251,6 +269,7 @@ export default function Home() {
                     isOwner={workout.created_by === currentUser?.email}
                     showCommunityBadge={activeTab === 'community'}
                     onCopy={() => handleCopyWorkout(workout)}
+                    onAIInspire={() => handleAIInspire(workout)}
                     likeData={getLikesForWorkout(workout.id, currentUser?.email)}
                   />
                 </motion.div>
@@ -264,6 +283,16 @@ export default function Home() {
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSave={handleCreateWorkout}
+      />
+
+      <AIWorkoutGenerator
+        open={showAIInspiration}
+        onClose={() => {
+          setShowAIInspiration(false);
+          setInspirationWorkout(null);
+        }}
+        onGenerate={handleAIGenerate}
+        inspirationWorkout={inspirationWorkout}
       />
     </div>
   );

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { 
   Dumbbell, TrendingUp, Users, Zap, Heart, 
-  Trophy, Clock, Flame, ArrowRight, Sparkles
+  Trophy, Clock, Flame, ArrowRight, Sparkles, Copy, Wand2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -254,17 +254,23 @@ export default function Landing() {
                           <Dumbbell className="w-4 h-4" />
                           {workout.exercises?.length || 0} exercises
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Heart className="w-4 h-4" />
-                          {likeData.likeCount}
-                        </div>
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                        <Badge variant="outline" className="border-white/30 text-white">
-                          <Users className="w-3 h-3 mr-1" />
-                          {workout.copy_count || 0} copies
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-white/30 text-slate-300">
+                            <Heart className="w-3 h-3 mr-1" />
+                            {likeData.likeCount || 0}
+                          </Badge>
+                          <Badge variant="outline" className="border-white/30 text-slate-300">
+                            <Copy className="w-3 h-3 mr-1" />
+                            {workout.copy_count || 0}
+                          </Badge>
+                          <Badge variant="outline" className="border-white/30 text-slate-300">
+                            <Wand2 className="w-3 h-3 mr-1" />
+                            {workout.ai_inspo_count || 0}
+                          </Badge>
+                        </div>
                         <Badge className="bg-amber-500/20 text-amber-300 border-0">
                           {workout.difficulty}
                         </Badge>

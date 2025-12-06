@@ -148,7 +148,12 @@ export default function Home() {
     setShowAIInspiration(true);
   };
 
-  const handleAIGenerate = (aiWorkoutData) => {
+  const handleAIGenerate = async (aiWorkoutData) => {
+    if (inspirationWorkout) {
+      await base44.entities.Workout.update(inspirationWorkout.id, {
+        ai_inspo_count: (inspirationWorkout.ai_inspo_count || 0) + 1
+      });
+    }
     createMutation.mutate({
       ...aiWorkoutData,
       original_workout_id: inspirationWorkout?.id,

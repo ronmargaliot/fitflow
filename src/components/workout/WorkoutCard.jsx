@@ -88,12 +88,12 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                 <Heart className={`w-3 h-3 mr-1 ${likeData?.isLiked ? 'fill-current' : ''}`} />
                 {likeData?.likeCount || 0}
               </Badge>
-              <Badge className="bg-white/90 text-slate-700 text-xs">
+              <Badge className="bg-white/90 text-blue-600 text-xs">
                 <Copy className="w-3 h-3 mr-1" />
                 {workout.copy_count || 0}
               </Badge>
               <Badge className="bg-white/90 text-purple-600 text-xs">
-                <Sparkles className="w-3 h-3 mr-1" />
+                <Wand2 className="w-3 h-3 mr-1" />
                 {workout.ai_inspo_count || 0}
               </Badge>
             </div>

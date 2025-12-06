@@ -136,6 +136,15 @@ export default function ExerciseItem({
             </div>
           </div>
           
+          <div>
+            <label className="text-xs text-slate-500 mb-1 block">YouTube Video URL</label>
+            <Input
+              value={editData.demo_video || ''}
+              onChange={(e) => setEditData({ ...editData, demo_video: e.target.value })}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+          
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={handleCancel}>
               <X className="w-4 h-4 mr-1" />

@@ -29,6 +29,11 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
     demo_image: '',
     demo_video: ''
   });
+  
+  const handleVideoSelect = React.useCallback((url) => {
+    setExercise(prev => ({ ...prev, demo_video: url }));
+    setShowVideoSearch(false);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -214,17 +219,12 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
         </form>
       </DialogContent>
       
-      {showVideoSearch && (
-        <VideoSearchModal
-          open={showVideoSearch}
-          onClose={() => setShowVideoSearch(false)}
-          onSelect={(url) => {
-            setExercise({ ...exercise, demo_video: url });
-            setShowVideoSearch(false);
-          }}
-          exerciseName={exercise.name}
-        />
-      )}
+      <VideoSearchModal
+        open={showVideoSearch}
+        onClose={() => setShowVideoSearch(false)}
+        onSelect={handleVideoSelect}
+        exerciseName={exercise.name}
+      />
     </Dialog>
   );
 }

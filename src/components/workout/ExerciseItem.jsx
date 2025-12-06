@@ -21,6 +21,11 @@ export default function ExerciseItem({
   const [editData, setEditData] = useState(exercise);
   const [showDemo, setShowDemo] = useState(false);
   const [showVideoSearch, setShowVideoSearch] = useState(false);
+  
+  const handleVideoSelect = React.useCallback((url) => {
+    setEditData(prev => ({ ...prev, demo_video: url }));
+    setShowVideoSearch(false);
+  }, []);
 
   const handleSave = () => {
     onUpdate(editData);
@@ -279,17 +284,12 @@ export default function ExerciseItem({
         exercise={exercise}
       />
       
-      {showVideoSearch && (
-        <VideoSearchModal
-          open={showVideoSearch}
-          onClose={() => setShowVideoSearch(false)}
-          onSelect={(url) => {
-            setEditData({ ...editData, demo_video: url });
-            setShowVideoSearch(false);
-          }}
-          exerciseName={editData.name}
-        />
-      )}
+      <VideoSearchModal
+        open={showVideoSearch}
+        onClose={() => setShowVideoSearch(false)}
+        onSelect={handleVideoSelect}
+        exerciseName={editData.name}
+      />
     </motion.div>
   );
 }

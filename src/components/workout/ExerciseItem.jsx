@@ -278,7 +278,10 @@ export default function ExerciseItem({
       <VideoSearchModal
         open={showVideoSearch}
         onClose={() => setShowVideoSearch(false)}
-        onSelect={(url) => setEditData({ ...editData, demo_video: url })}
+        onSelect={(url) => {
+          setEditData({ ...editData, demo_video: url });
+          setShowVideoSearch(false);
+        }}
         exerciseName={editData.name}
       />
     </motion.div>

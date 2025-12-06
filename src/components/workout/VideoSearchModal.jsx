@@ -16,6 +16,14 @@ export default function VideoSearchModal({ open, onClose, onSelect, exerciseName
   const [isSearching, setIsSearching] = useState(false);
   const [videos, setVideos] = useState([]);
 
+  // Reset state when modal closes
+  React.useEffect(() => {
+    if (!open) {
+      setPrompt('');
+      setVideos([]);
+    }
+  }, [open]);
+
   const handleSearch = async () => {
     if (!prompt.trim()) return;
     
@@ -61,6 +69,8 @@ Return ONLY a JSON array with this exact structure:
 
   const handleSelect = (video) => {
     onSelect(video.url);
+    setVideos([]);
+    setPrompt('');
     onClose();
   };
 

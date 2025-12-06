@@ -213,7 +213,10 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
       <VideoSearchModal
         open={showVideoSearch}
         onClose={() => setShowVideoSearch(false)}
-        onSelect={(url) => setExercise({ ...exercise, demo_video: url })}
+        onSelect={(url) => {
+          setExercise({ ...exercise, demo_video: url });
+          setShowVideoSearch(false);
+        }}
         exerciseName={exercise.name}
       />
     </Dialog>

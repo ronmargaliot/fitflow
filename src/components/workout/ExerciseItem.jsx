@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, Timer, Hash, Play } from 'lucide-react';
+import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, Timer, Hash, Play, Search } from 'lucide-react';
 import ExerciseDemoModal from './ExerciseDemoModal';
+import VideoSearchModal from './VideoSearchModal';
 import { motion } from 'framer-motion';
 
 export default function ExerciseItem({ 
@@ -19,6 +20,7 @@ export default function ExerciseItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(exercise);
   const [showDemo, setShowDemo] = useState(false);
+  const [showVideoSearch, setShowVideoSearch] = useState(false);
 
   const handleSave = () => {
     onUpdate(editData);
@@ -138,11 +140,21 @@ export default function ExerciseItem({
           
           <div>
             <label className="text-xs text-slate-500 mb-1 block">YouTube Video URL</label>
-            <Input
-              value={editData.demo_video || ''}
-              onChange={(e) => setEditData({ ...editData, demo_video: e.target.value })}
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
+            <div className="flex gap-2">
+              <Input
+                value={editData.demo_video || ''}
+                onChange={(e) => setEditData({ ...editData, demo_video: e.target.value })}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowVideoSearch(true)}
+              >
+                <Search className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           
           <div className="flex justify-end gap-2 pt-2">
@@ -261,6 +273,13 @@ export default function ExerciseItem({
         open={showDemo}
         onClose={() => setShowDemo(false)}
         exercise={exercise}
+      />
+      
+      <VideoSearchModal
+        open={showVideoSearch}
+        onClose={() => setShowVideoSearch(false)}
+        onSelect={(url) => setEditData({ ...editData, demo_video: url })}
+        exerciseName={editData.name}
       />
     </motion.div>
   );

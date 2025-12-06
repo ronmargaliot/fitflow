@@ -11,10 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Plus, Timer, Hash } from 'lucide-react';
+import { Plus, Timer, Hash, Search } from 'lucide-react';
 import ImageUpload from '@/components/common/ImageUpload';
+import VideoSearchModal from './VideoSearchModal';
 
 export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) {
+  const [showVideoSearch, setShowVideoSearch] = useState(false);
   const [exercise, setExercise] = useState({
     name: '',
     exercise_type: 'reps',
@@ -177,14 +179,23 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
 
           <div>
             <Label htmlFor="video">YouTube Video URL - optional</Label>
-            <Input
-              id="video"
-              value={exercise.demo_video}
-              onChange={(e) => setExercise({ ...exercise, demo_video: e.target.value })}
-              className="mt-1"
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
-            <p className="text-xs text-slate-500 mt-1">Add a YouTube video showing how to perform this exercise</p>
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="video"
+                value={exercise.demo_video}
+                onChange={(e) => setExercise({ ...exercise, demo_video: e.target.value })}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowVideoSearch(true)}
+                disabled={!exercise.name}
+              >
+                <Search className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Paste URL or search for a video</p>
           </div>
           
           <DialogFooter>
@@ -198,6 +209,13 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
           </DialogFooter>
         </form>
       </DialogContent>
+      
+      <VideoSearchModal
+        open={showVideoSearch}
+        onClose={() => setShowVideoSearch(false)}
+        onSelect={(url) => setExercise({ ...exercise, demo_video: url })}
+        exerciseName={exercise.name}
+      />
     </Dialog>
   );
 }

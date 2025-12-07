@@ -53,26 +53,14 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-            ) : isGenerating ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">Generating demo...</p>
-                </div>
-              </div>
-            ) : demoUrl ? (
-              <img 
-                src={demoUrl} 
-                alt={`${exercise.name} demo`}
-                className="w-full h-full object-cover"
-              />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-slate-400">
                 <div className="text-center p-4">
                   <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mx-auto mb-3">
                     {isTimeBased ? <Timer className="w-8 h-8" /> : <Hash className="w-8 h-8" />}
                   </div>
-                  <p className="text-sm">{error || 'No demo available'}</p>
+                  <p className="text-sm">No demo video added</p>
+                  <p className="text-xs text-slate-400 mt-1">Edit exercise to add YouTube video</p>
                 </div>
               </div>
             )}

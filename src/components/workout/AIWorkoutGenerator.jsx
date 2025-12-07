@@ -96,16 +96,25 @@ Make it challenging but achievable for the specified difficulty level.`;
         }
       });
 
-      // Add IDs to exercises
+      // Validate and process exercises
+      if (!result.exercises || !Array.isArray(result.exercises) || result.exercises.length === 0) {
+        throw new Error('No exercises were generated. Please try again.');
+      }
+
       const workoutData = {
         ...result,
         category: formData.category,
         difficulty: formData.difficulty,
         duration_minutes: formData.duration,
-        exercises: result.exercises.map(ex => ({
+        exercises: result.exercises.map((ex, idx) => ({
           ...ex,
-          id: `ex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          exercise_type: ex.exercise_type || 'reps'
+          id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+          exercise_type: ex.exercise_type || 'reps',
+          sets: ex.sets || 3,
+          reps: ex.reps || '10',
+          rest: ex.rest || 60,
+          weight: ex.weight || 0,
+          notes: ex.notes || ''
         })),
         color: getColorForCategory(formData.category),
         is_public: false

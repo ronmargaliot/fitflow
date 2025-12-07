@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { useBulkLikes } from '@/components/social/useLikes';
 
 const CATEGORY_ICONS = {

@@ -27,7 +27,7 @@ export default function AIWorkoutGenerator({ open, onClose, onGenerate, inspirat
     category: 'strength',
     equipment: '',
     focus: '',
-    style: ''
+    userNotes: ''
   });
 
   const handleGenerate = async () => {
@@ -37,6 +37,10 @@ export default function AIWorkoutGenerator({ open, onClose, onGenerate, inspirat
         ? `\n\nUse this workout as inspiration (don't copy it exactly, but use similar structure/intensity/style):\n${JSON.stringify(inspirationWorkout, null, 2)}`
         : '';
 
+      const userNotesSection = formData.userNotes 
+        ? `\n\n⚠️ IMPORTANT USER REQUIREMENTS (PRIORITIZE THESE):\n${formData.userNotes}\n`
+        : '';
+
       const prompt = `Generate a detailed workout plan with the following requirements:
 - Goal: ${formData.goal || 'General fitness'}
 - Duration: ${formData.duration} minutes
@@ -44,8 +48,7 @@ export default function AIWorkoutGenerator({ open, onClose, onGenerate, inspirat
 - Category: ${formData.category}
 - Equipment: ${formData.equipment || 'No specific equipment required'}
 - Focus areas: ${formData.focus || 'Full body'}
-- Style/Vibe: ${formData.style || 'Balanced and effective'}
-${inspirationText}
+${userNotesSection}${inspirationText}
 
 Please create a complete workout with 6-10 exercises. For each exercise provide:
 - name: Exercise name
@@ -231,17 +234,21 @@ Make it challenging but achievable for the specified difficulty level.`;
             />
           </div>
 
-          {inspirationWorkout && (
-            <div>
-              <Label>Style / Additional Instructions</Label>
-              <Textarea
-                placeholder="How should this differ from the inspiration workout? Any specific requests?"
-                value={formData.style}
-                onChange={(e) => setFormData({ ...formData, style: e.target.value })}
-                rows={3}
-              />
-            </div>
-          )}
+          <div>
+            <Label className="text-base font-semibold">Special Instructions / Requirements</Label>
+            <p className="text-xs text-slate-500 mb-2">
+              {inspirationWorkout 
+                ? 'Any specific changes from the inspiration workout? The AI will prioritize these instructions.'
+                : 'Any specific requirements or preferences? The AI will prioritize these instructions.'}
+            </p>
+            <Textarea
+              placeholder="e.g., No jumping exercises, focus on mobility, include specific movements, etc."
+              value={formData.userNotes}
+              onChange={(e) => setFormData({ ...formData, userNotes: e.target.value })}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
         </div>
 
         <div className="flex justify-end gap-2">

@@ -14,33 +14,7 @@ export default function ExerciseDemoModal({ open, onClose, exercise }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (open && exercise && !exercise.demo_image) {
-      generateDemoImage();
-    }
-  }, [open, exercise?.id]);
-
-  const generateDemoImage = async () => {
-    if (!exercise || exercise.demo_video) return;
-    
-    setIsGenerating(true);
-    setError(null);
-    
-    try {
-      const result = await base44.integrations.Core.GenerateImage({
-        prompt: `Professional fitness instruction illustration showing how to do a ${exercise.name} exercise. Clean, simple step-by-step demonstration with a fit person in athletic wear performing the exercise with proper form. White or light gym background. Educational fitness poster style. Show the movement clearly.`
-      });
-      
-      if (result?.url) {
-        setGeneratedImage(result.url);
-      }
-    } catch (err) {
-      console.error('Failed to generate image:', err);
-      setError('Could not generate demo');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  // No auto-generation - user should add YouTube videos manually
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;

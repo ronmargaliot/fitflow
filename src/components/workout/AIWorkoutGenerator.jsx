@@ -30,159 +30,256 @@ export default function AIWorkoutGenerator({ open, onClose, onGenerate, inspirat
     userNotes: ''
   });
 
-  // Hardcoded fallback exercises by category
-  const getHardcodedFallback = (category, difficulty) => {
-    const fallbacks = {
-      strength: [
-        { name: 'Push-ups', sets: 3, exercise_type: 'reps', reps: '10-12', rest: 60, weight: 0, notes: 'Keep body straight' },
-        { name: 'Squats', sets: 4, exercise_type: 'reps', reps: '12-15', rest: 60, weight: 0, notes: 'Chest up, knees tracking toes' },
-        { name: 'Plank', sets: 3, exercise_type: 'time', duration_seconds: 30, rest: 60, weight: 0, notes: 'Hold straight line' },
-        { name: 'Lunges', sets: 3, exercise_type: 'reps', reps: '10', rest: 60, weight: 0, notes: 'Alternate legs' },
-        { name: 'Dumbbell Rows', sets: 3, exercise_type: 'reps', reps: '12', rest: 60, weight: 10, notes: 'Pull elbow back' },
-        { name: 'Shoulder Press', sets: 3, exercise_type: 'reps', reps: '10', rest: 60, weight: 8, notes: 'Control the weight' }
-      ],
-      cardio: [
-        { name: 'Jumping Jacks', sets: 3, exercise_type: 'time', duration_seconds: 45, rest: 30, weight: 0, notes: 'Keep steady rhythm' },
-        { name: 'High Knees', sets: 3, exercise_type: 'time', duration_seconds: 30, rest: 30, weight: 0, notes: 'Drive knees high' },
-        { name: 'Burpees', sets: 3, exercise_type: 'reps', reps: '10', rest: 45, weight: 0, notes: 'Full range of motion' },
-        { name: 'Mountain Climbers', sets: 3, exercise_type: 'time', duration_seconds: 30, rest: 30, weight: 0, notes: 'Keep hips low' },
-        { name: 'Jump Rope', sets: 3, exercise_type: 'time', duration_seconds: 60, rest: 30, weight: 0, notes: 'Stay light on feet' }
-      ],
-      calisthenics: [
-        { name: 'Pull-ups', sets: 3, exercise_type: 'reps', reps: '8', rest: 90, weight: 0, notes: 'Full range of motion' },
-        { name: 'Dips', sets: 3, exercise_type: 'reps', reps: '10', rest: 60, weight: 0, notes: 'Chest slightly forward' },
-        { name: 'Pike Push-ups', sets: 3, exercise_type: 'reps', reps: '12', rest: 60, weight: 0, notes: 'Hips high' },
-        { name: 'Hanging Leg Raises', sets: 3, exercise_type: 'reps', reps: '10', rest: 60, weight: 0, notes: 'Control the descent' },
-        { name: 'Pistol Squats', sets: 3, exercise_type: 'reps', reps: '6', rest: 90, weight: 0, notes: 'Use support if needed' }
-      ]
-    };
-    
-    return fallbacks[category] || fallbacks.strength;
-  };
+  // STEP 1: Generate workout using structured schema
+  const generateWorkoutStructure = async (userInput) => {
+    const prompt = `You are a workout generation engine for a fitness app.
+Your only job is to generate structured workouts and never return an empty workout.
 
-  // Step 1: Generate exercises only (focused call)
-  const generateExercises = async (context) => {
-    const prompt = `You are a workout generation engine. Your ONLY job is to return a list of exercises.
+Global rules (always follow):
+- Always output valid JSON only, no prose, no markdown
+- The JSON must always include at least one exercise
+- Never return an empty exercises array
+- Do not invent new JSON fields
 
-CRITICAL RULES:
-1. ALWAYS return at least 6 exercises
-2. NEVER return an empty array
-3. Output valid JSON ONLY - no markdown, no explanations
+User requirements:
+- Goal: ${userInput.goal || 'General fitness'}
+- Category: ${userInput.category}
+- Difficulty: ${userInput.difficulty}
+- Duration: ${userInput.duration} minutes
+- Equipment: ${userInput.equipment || 'Standard gym equipment'}
+- Focus: ${userInput.focus || 'Full body'}
+${userInput.userNotes ? `- Special requirements: ${userInput.userNotes}` : ''}
 
-Generate 6-8 exercises for:
-- Category: ${context.category}
-- Difficulty: ${context.difficulty}
-- Duration: ${context.duration} minutes
-- Equipment: ${context.equipment || 'standard gym equipment'}
-- Focus: ${context.focus || 'full body'}
-${context.userNotes ? `- Special requirements: ${context.userNotes}` : ''}
+Generate a workout with 6-10 exercises. Return JSON in this EXACT structure:
 
-Return ONLY this JSON structure:
-[
-  {
-    "name": "Exercise Name",
-    "sets": 3,
-    "exercise_type": "reps",
-    "reps": "10-12",
-    "rest": 60,
-    "weight": 0,
-    "notes": "Brief form tip"
-  }
-]
-
-For time-based exercises use:
 {
-  "name": "Exercise Name",
-  "sets": 3,
-  "exercise_type": "time",
-  "duration_seconds": 30,
-  "rest": 60,
-  "weight": 0,
-  "notes": "Brief form tip"
-}`;
+  "workout_metadata": {
+    "title": "Workout Name",
+    "goal": "${userInput.goal || 'fitness'}",
+    "experience_level": "${userInput.difficulty}",
+    "session_duration_minutes": ${userInput.duration},
+    "training_split_hint": "${userInput.focus || 'full body'}"
+  },
+  "exercises": [
+    {
+      "exercise_name": "Exercise Name",
+      "primary_muscle_group": "chest|back|legs|arms|shoulders|core",
+      "secondary_muscle_groups": ["muscle group"],
+      "equipment": "equipment name",
+      "is_bodyweight": true,
+      "order_index": 1,
+      "sets": [
+        {
+          "set_index": 1,
+          "reps": 10,
+          "load_type": "bodyweight",
+          "target_load_value": null,
+          "rest_seconds": 60,
+          "notes": "form cue"
+        }
+      ],
+      "notes": "exercise notes"
+    }
+  ]
+}
+
+Constraints:
+- exercises must have length ≥ 6
+- Each exercise must have at least one set in sets
+- order_index and set_index must be 1-based and sequential
+- Use clear exercise names (e.g., "Barbell Bench Press")`;
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
         prompt,
         response_json_schema: {
-          type: 'array',
-          minItems: 6,
-          items: {
-            type: 'object',
-            required: ['name', 'sets', 'exercise_type'],
-            properties: {
-              name: { type: 'string', minLength: 3 },
-              sets: { type: 'number', minimum: 1 },
-              exercise_type: { type: 'string', enum: ['reps', 'time'] },
-              reps: { type: 'string' },
-              duration_seconds: { type: 'number' },
-              rest: { type: 'number', minimum: 0 },
-              weight: { type: 'number', minimum: 0 },
-              notes: { type: 'string' }
+          type: 'object',
+          required: ['workout_metadata', 'exercises'],
+          properties: {
+            workout_metadata: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                goal: { type: 'string' },
+                experience_level: { type: 'string' },
+                session_duration_minutes: { type: 'number' },
+                training_split_hint: { type: 'string' }
+              }
+            },
+            exercises: {
+              type: 'array',
+              minItems: 6,
+              items: {
+                type: 'object',
+                required: ['exercise_name', 'sets'],
+                properties: {
+                  exercise_name: { type: 'string' },
+                  primary_muscle_group: { type: 'string' },
+                  secondary_muscle_groups: { type: 'array', items: { type: 'string' } },
+                  equipment: { type: 'string' },
+                  is_bodyweight: { type: 'boolean' },
+                  order_index: { type: 'number' },
+                  sets: {
+                    type: 'array',
+                    minItems: 1,
+                    items: {
+                      type: 'object',
+                      properties: {
+                        set_index: { type: 'number' },
+                        reps: { type: 'number' },
+                        load_type: { type: 'string' },
+                        target_load_value: { type: ['number', 'null'] },
+                        rest_seconds: { type: 'number' },
+                        notes: { type: 'string' }
+                      }
+                    }
+                  },
+                  notes: { type: 'string' }
+                }
+              }
             }
           }
         }
       });
 
-      if (Array.isArray(result) && result.length >= 6) {
-        return result;
-      }
-      return null;
+      return result;
     } catch (err) {
-      console.warn('Exercise generation failed:', err);
+      console.error('Step 1 failed:', err);
       return null;
     }
   };
 
-  // Step 2: Validate and normalize exercises
-  const normalizeExercises = (rawExercises) => {
-    if (!rawExercises || !Array.isArray(rawExercises)) return [];
-    
-    return rawExercises
-      .filter(ex => ex.name && ex.name.trim().length > 0)
-      .map(ex => ({
-        name: ex.name.trim(),
-        sets: Math.max(1, ex.sets || 3),
-        exercise_type: ex.exercise_type === 'time' ? 'time' : 'reps',
-        reps: ex.exercise_type === 'reps' ? (ex.reps || '10') : undefined,
-        duration_seconds: ex.exercise_type === 'time' ? (ex.duration_seconds || 30) : undefined,
-        rest: Math.max(0, ex.rest || 60),
-        weight: Math.max(0, ex.weight || 0),
-        notes: (ex.notes || '').trim()
-      }));
+  // STEP 2: Validate and normalize the workout
+  const normalizeWorkout = async (rawWorkout) => {
+    const prompt = `You are now given a raw workout JSON. Your job is to validate, clean, and normalize this JSON.
+
+Raw workout:
+${JSON.stringify(rawWorkout)}
+
+Validate structure:
+- Ensure exercises is an array with length ≥ 1
+- Each exercise must have exercise_name, sets array
+- Each set must have set_index, reps, rest_seconds
+
+Repair issues:
+- If order_index or set_index missing, recalculate sequentially
+- If rest_seconds missing, default to 60
+- If reps missing, default to 10
+
+If no valid exercises remain after repair, create ONE fallback:
+{
+  "exercise_name": "Bodyweight Squat",
+  "primary_muscle_group": "legs",
+  "equipment": "bodyweight",
+  "is_bodyweight": true,
+  "order_index": 1,
+  "sets": [
+    {"set_index": 1, "reps": 10, "load_type": "bodyweight", "target_load_value": null, "rest_seconds": 60, "notes": ""}
+  ],
+  "notes": ""
+}
+
+Return the normalized workout with the same structure. Output only JSON.`;
+
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: 'object',
+          required: ['workout_metadata', 'exercises'],
+          properties: {
+            workout_metadata: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                goal: { type: 'string' },
+                experience_level: { type: 'string' },
+                session_duration_minutes: { type: 'number' }
+              }
+            },
+            exercises: {
+              type: 'array',
+              minItems: 1,
+              items: {
+                type: 'object',
+                required: ['exercise_name', 'sets'],
+                properties: {
+                  exercise_name: { type: 'string' },
+                  primary_muscle_group: { type: 'string' },
+                  equipment: { type: 'string' },
+                  is_bodyweight: { type: 'boolean' },
+                  order_index: { type: 'number' },
+                  sets: {
+                    type: 'array',
+                    minItems: 1,
+                    items: {
+                      type: 'object',
+                      properties: {
+                        set_index: { type: 'number' },
+                        reps: { type: 'number' },
+                        load_type: { type: 'string' },
+                        target_load_value: { type: ['number', 'null'] },
+                        rest_seconds: { type: 'number' }
+                      }
+                    }
+                  },
+                  notes: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      return result;
+    } catch (err) {
+      console.error('Step 2 failed:', err);
+      return rawWorkout; // Return original if normalization fails
+    }
   };
 
-  // Step 3: Enrich with video demos
-  const enrichWithVideos = async (exercises) => {
-    return Promise.all(
-      exercises.map(async (ex, idx) => {
-        let demo_video = '';
-        try {
-          const videoResult = await base44.integrations.Core.InvokeLLM({
-            prompt: `Find YouTube URL for: "${ex.name}". Return ONLY the URL.`,
-            add_context_from_internet: true
-          });
-          if (videoResult && videoResult.includes('youtube.com')) {
-            demo_video = videoResult.trim().split('\n')[0];
-          }
-        } catch (err) {
-          console.warn(`Video search failed for ${ex.name}`);
-        }
+  // STEP 3: Transform to app format
+  const transformToAppFormat = (normalizedWorkout, userInput) => {
+    const exercises = normalizedWorkout.exercises.map((ex, idx) => {
+      // Determine exercise type based on load_type
+      const firstSet = ex.sets[0];
+      const isTimeBased = firstSet?.load_type === 'time';
+      
+      return {
+        id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+        name: ex.exercise_name,
+        sets: ex.sets.length,
+        exercise_type: isTimeBased ? 'time' : 'reps',
+        reps: !isTimeBased ? String(firstSet?.reps || 10) : undefined,
+        duration_seconds: isTimeBased ? (firstSet?.reps || 30) : undefined,
+        rest: firstSet?.rest_seconds || 60,
+        weight: firstSet?.target_load_value || 0,
+        notes: ex.notes || '',
+        demo_video: ''
+      };
+    });
 
-        return {
-          ...ex,
-          id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
-          demo_video
-        };
-      })
-    );
+    return {
+      name: normalizedWorkout.workout_metadata.title,
+      description: `A ${userInput.difficulty} ${userInput.category} workout${userInput.goal ? ' focused on ' + userInput.goal : ''}`,
+      default_rest: 60,
+      rest_between_exercises: 90,
+      tips: 'Focus on proper form and controlled movements.',
+      category: userInput.category,
+      difficulty: userInput.difficulty,
+      duration_minutes: userInput.duration,
+      exercises: exercises,
+      color: getColorForCategory(userInput.category),
+      is_public: false
+    };
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
     
     try {
-      const context = {
+      const userInput = {
+        goal: formData.goal,
         category: formData.category,
         difficulty: formData.difficulty,
         duration: formData.duration,
@@ -191,45 +288,40 @@ For time-based exercises use:
         userNotes: formData.userNotes
       };
 
-      // Try 3 times to generate exercises
-      let rawExercises = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        console.log(`Generation attempt ${attempt}/3...`);
-        rawExercises = await generateExercises(context);
-        if (rawExercises && rawExercises.length >= 6) break;
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // STEP 1: Generate structured workout
+      let rawWorkout = await generateWorkoutStructure(userInput);
+      
+      if (!rawWorkout || !rawWorkout.exercises || rawWorkout.exercises.length === 0) {
+        throw new Error('Step 1 failed to generate exercises');
       }
 
-      // Normalize whatever we got
-      let exercises = normalizeExercises(rawExercises);
-
-      // If still insufficient, use hardcoded fallback
-      if (exercises.length < 6) {
-        console.warn('Using hardcoded fallback exercises');
-        exercises = getHardcodedFallback(context.category, context.difficulty);
+      // STEP 2: Normalize and validate
+      const normalizedWorkout = await normalizeWorkout(rawWorkout);
+      
+      if (!normalizedWorkout.exercises || normalizedWorkout.exercises.length === 0) {
+        throw new Error('Step 2 validation failed');
       }
 
-      // Enrich with videos (non-blocking, best effort)
-      const enrichedExercises = await enrichWithVideos(exercises.slice(0, 10));
+      // STEP 3: Transform to app format
+      const workoutData = transformToAppFormat(normalizedWorkout, userInput);
 
-      // Generate metadata
-      const workoutData = {
-        name: `${formData.goal ? formData.goal + ' - ' : ''}${formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} Workout`,
-        description: `A ${formData.difficulty} ${formData.category} workout${formData.goal ? ' focused on ' + formData.goal : ''}`,
-        default_rest: 60,
-        rest_between_exercises: 90,
-        tips: 'Focus on proper form and controlled movements. Breathe consistently throughout each exercise.',
-        category: formData.category,
-        difficulty: formData.difficulty,
-        duration_minutes: formData.duration,
-        exercises: enrichedExercises,
-        color: getColorForCategory(formData.category),
-        is_public: false
-      };
-
-      // FINAL GUARANTEE: Must have exercises
-      if (!workoutData.exercises || workoutData.exercises.length === 0) {
-        throw new Error('CRITICAL: No exercises generated. This should never happen.');
+      // STEP 4: Enrich with videos (best effort, non-blocking)
+      try {
+        for (let i = 0; i < workoutData.exercises.length; i++) {
+          try {
+            const videoResult = await base44.integrations.Core.InvokeLLM({
+              prompt: `Find YouTube URL for: "${workoutData.exercises[i].name}". Return ONLY the URL.`,
+              add_context_from_internet: true
+            });
+            if (videoResult && videoResult.includes('youtube.com')) {
+              workoutData.exercises[i].demo_video = videoResult.trim().split('\n')[0];
+            }
+          } catch (err) {
+            // Ignore video failures
+          }
+        }
+      } catch (err) {
+        console.warn('Video enrichment failed, continuing without videos');
       }
 
       onGenerate(workoutData);
@@ -237,7 +329,7 @@ For time-based exercises use:
       
     } catch (error) {
       console.error('Workout generation failed:', error);
-      alert('Failed to generate workout. Please try again.');
+      alert(`Failed to generate workout: ${error.message}`);
     } finally {
       setGenerating(false);
     }

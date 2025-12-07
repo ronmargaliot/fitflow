@@ -93,11 +93,7 @@ export default function Home() {
   const displayedWorkouts = applyFilters(activeTab === 'my' ? myWorkouts : communityWorkouts);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Workout.create({ 
-      ...data, 
-      exercises: [],
-      is_public: true
-    }),
+    mutationFn: (data) => base44.entities.Workout.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
     }

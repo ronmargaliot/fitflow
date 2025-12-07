@@ -32,16 +32,23 @@ export default function AIWorkoutGenerator({ open, onClose, onGenerate, inspirat
 
   const handleGenerate = async () => {
     setGenerating(true);
-    try {
-      const inspirationText = inspirationWorkout 
-        ? `\n\nUse this workout as inspiration (don't copy it exactly, but use similar structure/intensity/style):\n${JSON.stringify(inspirationWorkout, null, 2)}`
-        : '';
+    
+    const maxRetries = 3;
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const inspirationText = inspirationWorkout 
+          ? `\n\nUse this workout as inspiration (don't copy it exactly, but use similar structure/intensity/style):\n${JSON.stringify(inspirationWorkout, null, 2)}`
+          : '';
 
-      const userNotesSection = formData.userNotes 
-        ? `\n\n⚠️ IMPORTANT USER REQUIREMENTS (PRIORITIZE THESE):\n${formData.userNotes}\n`
-        : '';
+        const userNotesSection = formData.userNotes 
+          ? `\n\n⚠️ IMPORTANT USER REQUIREMENTS (PRIORITIZE THESE):\n${formData.userNotes}\n`
+          : '';
 
-      const prompt = `Generate a detailed workout plan with the following requirements:
+        const prompt = `🎯 CRITICAL REQUIREMENT: You MUST generate a complete workout with AT LEAST 6 exercises. The exercises array cannot be empty.
+
+Generate a detailed workout plan with the following requirements:
 - Goal: ${formData.goal || 'General fitness'}
 - Duration: ${formData.duration} minutes
 - Difficulty: ${formData.difficulty}
@@ -50,87 +57,145 @@ export default function AIWorkoutGenerator({ open, onClose, onGenerate, inspirat
 - Focus areas: ${formData.focus || 'Full body'}
 ${userNotesSection}${inspirationText}
 
-Please create a complete workout with 6-10 exercises. For each exercise provide:
-- name: Exercise name
-- sets: Number of sets (usually 3-4)
+⚠️ MANDATORY: Create a complete workout with 6-10 exercises. For EACH exercise you MUST provide ALL of these fields:
+- name: Exercise name (e.g., "Push-ups", "Barbell Squats")
+- sets: Number of sets (3-4)
 - reps: Reps per set (e.g., "10-12" or "15")
-- exercise_type: "reps" or "time"
-- duration_seconds: If time-based, duration in seconds
-- rest: Rest between sets in seconds (usually 45-90)
+- exercise_type: Either "reps" or "time"
+- duration_seconds: If time-based, duration in seconds (default 30)
+- rest: Rest between sets in seconds (45-90)
 - weight: Suggested weight in kg (0 if bodyweight)
-- notes: Brief form tips
+- notes: Brief form tips (e.g., "Keep back straight")
 
-Also provide:
+Also provide workout metadata:
 - name: Workout name (creative and motivating)
 - description: Brief description
 - default_rest: Default rest between sets (60-90 seconds)
 - rest_between_exercises: Rest between exercises (90-120 seconds)
 - tips: General tips for the workout
 
-Make it challenging but achievable for the specified difficulty level.`;
+⚠️ VALIDATION: The exercises array MUST contain at least 6 complete exercise objects. Do not return an empty array.`;
 
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            name: { type: 'string' },
-            description: { type: 'string' },
-            default_rest: { type: 'number' },
-            rest_between_exercises: { type: 'number' },
-            tips: { type: 'string' },
-            exercises: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  sets: { type: 'number' },
-                  reps: { type: 'string' },
-                  exercise_type: { type: 'string' },
-                  duration_seconds: { type: 'number' },
-                  rest: { type: 'number' },
-                  weight: { type: 'number' },
-                  notes: { type: 'string' }
+        const result = await base44.integrations.Core.InvokeLLM({
+          prompt,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              default_rest: { type: 'number' },
+              rest_between_exercises: { type: 'number' },
+              tips: { type: 'string' },
+              exercises: {
+                type: 'array',
+                minItems: 6,
+                items: {
+                  type: 'object',
+                  required: ['name', 'sets', 'exercise_type'],
+                  properties: {
+                    name: { type: 'string' },
+                    sets: { type: 'number' },
+                    reps: { type: 'string' },
+                    exercise_type: { type: 'string', enum: ['reps', 'time'] },
+                    duration_seconds: { type: 'number' },
+                    rest: { type: 'number' },
+                    weight: { type: 'number' },
+                    notes: { type: 'string' }
+                  }
                 }
               }
-            }
+            },
+            required: ['name', 'exercises']
           }
+        });
+
+        // Strict validation
+        if (!result.exercises || !Array.isArray(result.exercises)) {
+          throw new Error('Invalid response: exercises must be an array');
         }
-      });
+        
+        if (result.exercises.length < 3) {
+          throw new Error(`Insufficient exercises: got ${result.exercises.length}, need at least 3`);
+        }
 
-      // Validate and process exercises
-      if (!result.exercises || !Array.isArray(result.exercises) || result.exercises.length === 0) {
-        throw new Error('No exercises were generated. Please try again.');
+        // Validate each exercise has required fields
+        const validExercises = result.exercises.filter(ex => 
+          ex.name && ex.name.trim().length > 0 && 
+          ex.sets && ex.sets > 0
+        );
+
+        if (validExercises.length < 3) {
+          throw new Error(`Not enough valid exercises: got ${validExercises.length}, need at least 3`);
+        }
+
+        // Generate YouTube search for each exercise
+        const exercisesWithVideos = await Promise.all(
+          validExercises.map(async (ex, idx) => {
+            let demo_video = '';
+            try {
+              const searchResult = await base44.integrations.Core.InvokeLLM({
+                prompt: `Find a YouTube video URL for demonstrating the exercise: "${ex.name}". Return ONLY the full YouTube URL (https://www.youtube.com/watch?v=...).`,
+                add_context_from_internet: true
+              });
+              if (searchResult && typeof searchResult === 'string' && searchResult.includes('youtube.com')) {
+                demo_video = searchResult.trim();
+              }
+            } catch (err) {
+              console.warn(`Failed to find video for ${ex.name}:`, err);
+            }
+
+            return {
+              ...ex,
+              id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+              exercise_type: ex.exercise_type || 'reps',
+              sets: ex.sets || 3,
+              reps: ex.reps || '10',
+              rest: ex.rest || 60,
+              weight: ex.weight || 0,
+              notes: ex.notes || '',
+              duration_seconds: ex.exercise_type === 'time' ? (ex.duration_seconds || 30) : undefined,
+              demo_video
+            };
+          })
+        );
+
+        const workoutData = {
+          name: result.name || 'Custom Workout',
+          description: result.description || '',
+          default_rest: result.default_rest || 60,
+          rest_between_exercises: result.rest_between_exercises || 90,
+          tips: result.tips || '',
+          category: formData.category,
+          difficulty: formData.difficulty,
+          duration_minutes: formData.duration,
+          exercises: exercisesWithVideos,
+          color: getColorForCategory(formData.category),
+          is_public: false
+        };
+
+        // Final validation before success
+        if (workoutData.exercises.length < 3) {
+          throw new Error('Workout validation failed: insufficient exercises');
+        }
+
+        onGenerate(workoutData);
+        onClose();
+        return; // Success!
+        
+      } catch (error) {
+        console.error(`Attempt ${attempt}/${maxRetries} failed:`, error);
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        }
       }
-
-      const workoutData = {
-        ...result,
-        category: formData.category,
-        difficulty: formData.difficulty,
-        duration_minutes: formData.duration,
-        exercises: result.exercises.map((ex, idx) => ({
-          ...ex,
-          id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
-          exercise_type: ex.exercise_type || 'reps',
-          sets: ex.sets || 3,
-          reps: ex.reps || '10',
-          rest: ex.rest || 60,
-          weight: ex.weight || 0,
-          notes: ex.notes || ''
-        })),
-        color: getColorForCategory(formData.category),
-        is_public: false
-      };
-
-      onGenerate(workoutData);
-      onClose();
-    } catch (error) {
-      console.error('Failed to generate workout:', error);
-      alert('Failed to generate workout. Please try again.');
-    } finally {
-      setGenerating(false);
     }
+    
+    // All retries failed
+    setGenerating(false);
+    alert(`Failed to generate workout after ${maxRetries} attempts. ${lastError?.message || 'Please try again with different parameters.'}`);
   };
 
   const getColorForCategory = (category) => {

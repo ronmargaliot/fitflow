@@ -53,7 +53,7 @@ export default function Landing() {
   const { getLikesForWorkout } = useBulkLikes();
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin();
+    base44.auth.redirectToLogin(createPageUrl('Home'));
   };
 
   // Stats

@@ -209,34 +209,85 @@ export default function WorkoutDetail() {
       {/* Header */}
       <header className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200">
         <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link to={createPageUrl('Home')}>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <div>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: workout.color || '#6366f1' }}
-                      />
-                      <h1 className="text-xl font-bold text-slate-900">{workout.name}</h1>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs text-slate-500">{exercises.length} exercises</p>
-                      {workout.is_public && !isOwner && (
-                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
-                          Community
-                        </Badge>
-                      )}
-                    </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Link to={createPageUrl('Home')}>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: workout.color || '#6366f1' }}
+                    />
+                    <h1 className="text-xl font-bold text-slate-900">{workout.name}</h1>
                   </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-slate-500">{exercises.length} exercises</p>
+                    {workout.is_public && !isOwner && (
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+                        Community
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Link to={createPageUrl(`ActiveWorkout?id=${workoutId}`)}>
+                  <Button className="bg-slate-900 hover:bg-slate-800 shadow-lg">
+                    <Play className="w-4 h-4 mr-2" />
+                    Start
+                  </Button>
+                </Link>
+
+                {isOwner && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-full">
+                        <MoreVertical className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setShowEditModal(true)}>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Edit Workout
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowAIInspiration(true)}>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        Use as AI Inspiration
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {workout.is_public ? (
+                        <DropdownMenuItem onClick={() => unShareMutation.mutate()}>
+                          <EyeOff className="w-4 h-4 mr-2" />
+                          Remove from Community
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => shareMutation.mutate()}>
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Share to Community
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-red-600"
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Workout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
             
             {/* Stats Row */}
-            <div className="flex items-center gap-3 mt-3">
+            <div className="flex items-center gap-3">
               <LikeButton
                 isLiked={isLiked}
                 likeCount={likeCount}
@@ -252,55 +303,6 @@ export default function WorkoutDetail() {
                 <Wand2 className="w-3 h-3 mr-1" />
                 {workout.ai_inspo_count || 0}
               </Badge>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Link to={createPageUrl(`ActiveWorkout?id=${workoutId}`)}>
-                <Button className="bg-slate-900 hover:bg-slate-800 shadow-lg">
-                  <Play className="w-4 h-4 mr-2" />
-                  Start
-                </Button>
-              </Link>
-
-              {isOwner && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowEditModal(true)}>
-                      <Settings className="w-4 h-4 mr-2" />
-                      Edit Workout
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowAIInspiration(true)}>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Use as AI Inspiration
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {workout.is_public ? (
-                      <DropdownMenuItem onClick={() => unShareMutation.mutate()}>
-                        <EyeOff className="w-4 h-4 mr-2" />
-                        Remove from Community
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => shareMutation.mutate()}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share to Community
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => setShowDeleteDialog(true)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Workout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
           </div>
         </div>

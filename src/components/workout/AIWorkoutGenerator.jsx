@@ -274,6 +274,63 @@ Return the normalized workout with the same structure. Output only JSON.`;
     };
   };
 
+  // HARDCODED EMERGENCY FALLBACK
+  const getEmergencyFallback = (userInput) => {
+    const fallbackExercises = {
+      strength: [
+        { name: 'Push-ups', sets: 3, reps: '12', rest: 60, weight: 0, notes: 'Keep core tight' },
+        { name: 'Bodyweight Squats', sets: 4, reps: '15', rest: 60, weight: 0, notes: 'Chest up' },
+        { name: 'Plank', sets: 3, duration_seconds: 45, rest: 60, weight: 0, notes: 'Hold straight' },
+        { name: 'Lunges', sets: 3, reps: '10 each leg', rest: 60, weight: 0, notes: 'Knee at 90°' },
+        { name: 'Dips', sets: 3, reps: '10', rest: 90, weight: 0, notes: 'Full range' },
+        { name: 'Mountain Climbers', sets: 3, duration_seconds: 30, rest: 60, weight: 0, notes: 'Keep hips low' }
+      ],
+      calisthenics: [
+        { name: 'Pull-ups', sets: 3, reps: '6-8', rest: 90, weight: 0, notes: 'Full ROM' },
+        { name: 'Dips', sets: 3, reps: '10', rest: 90, weight: 0, notes: 'Lean forward' },
+        { name: 'Pike Push-ups', sets: 3, reps: '12', rest: 60, weight: 0, notes: 'Hips high' },
+        { name: 'Hanging Leg Raises', sets: 3, reps: '10', rest: 60, weight: 0, notes: 'Control descent' },
+        { name: 'Handstand Hold', sets: 3, duration_seconds: 20, rest: 90, weight: 0, notes: 'Against wall' },
+        { name: 'L-Sit', sets: 3, duration_seconds: 15, rest: 60, weight: 0, notes: 'Legs straight' }
+      ],
+      cardio: [
+        { name: 'Jumping Jacks', sets: 3, duration_seconds: 45, rest: 30, weight: 0, notes: 'Steady pace' },
+        { name: 'High Knees', sets: 3, duration_seconds: 30, rest: 30, weight: 0, notes: 'Drive knees up' },
+        { name: 'Burpees', sets: 3, reps: '10', rest: 45, weight: 0, notes: 'Full ROM' },
+        { name: 'Mountain Climbers', sets: 3, duration_seconds: 40, rest: 30, weight: 0, notes: 'Fast pace' },
+        { name: 'Jump Squats', sets: 3, reps: '12', rest: 45, weight: 0, notes: 'Land softly' },
+        { name: 'Skater Hops', sets: 3, reps: '15 each side', rest: 45, weight: 0, notes: 'Lateral power' }
+      ]
+    };
+
+    const exercises = (fallbackExercises[userInput.category] || fallbackExercises.strength).map((ex, idx) => ({
+      id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+      name: ex.name,
+      sets: ex.sets,
+      exercise_type: ex.duration_seconds ? 'time' : 'reps',
+      reps: ex.reps,
+      duration_seconds: ex.duration_seconds,
+      rest: ex.rest,
+      weight: ex.weight,
+      notes: ex.notes,
+      demo_video: ''
+    }));
+
+    return {
+      name: `${userInput.category.charAt(0).toUpperCase() + userInput.category.slice(1)} Workout`,
+      description: `A ${userInput.difficulty} ${userInput.category} workout`,
+      default_rest: 60,
+      rest_between_exercises: 90,
+      tips: 'Focus on form and controlled movements.',
+      category: userInput.category,
+      difficulty: userInput.difficulty,
+      duration_minutes: userInput.duration,
+      exercises: exercises,
+      color: getColorForCategory(userInput.category),
+      is_public: false
+    };
+  };
+
   const handleGenerate = async () => {
     setGenerating(true);
     
@@ -288,26 +345,52 @@ Return the normalized workout with the same structure. Output only JSON.`;
         userNotes: formData.userNotes
       };
 
+      console.log('🎯 Starting workout generation with:', userInput);
+
       // STEP 1: Generate structured workout
+      console.log('📝 Step 1: Generating workout structure...');
       let rawWorkout = await generateWorkoutStructure(userInput);
+      console.log('✅ Step 1 result:', rawWorkout);
       
       if (!rawWorkout || !rawWorkout.exercises || rawWorkout.exercises.length === 0) {
-        throw new Error('Step 1 failed to generate exercises');
+        console.error('❌ Step 1 failed - no exercises generated, using emergency fallback');
+        const fallbackWorkout = getEmergencyFallback(userInput);
+        onGenerate(fallbackWorkout);
+        onClose();
+        return;
       }
 
       // STEP 2: Normalize and validate
+      console.log('🔧 Step 2: Normalizing workout...');
       const normalizedWorkout = await normalizeWorkout(rawWorkout);
+      console.log('✅ Step 2 result:', normalizedWorkout);
       
       if (!normalizedWorkout.exercises || normalizedWorkout.exercises.length === 0) {
-        throw new Error('Step 2 validation failed');
+        console.error('❌ Step 2 failed - no exercises after normalization, using emergency fallback');
+        const fallbackWorkout = getEmergencyFallback(userInput);
+        onGenerate(fallbackWorkout);
+        onClose();
+        return;
       }
 
       // STEP 3: Transform to app format
+      console.log('🔄 Step 3: Transforming to app format...');
       const workoutData = transformToAppFormat(normalizedWorkout, userInput);
+      console.log('✅ Step 3 result exercises count:', workoutData.exercises.length);
+
+      // FINAL CHECK
+      if (!workoutData.exercises || workoutData.exercises.length === 0) {
+        console.error('❌ CRITICAL: Transform failed, using emergency fallback');
+        const fallbackWorkout = getEmergencyFallback(userInput);
+        onGenerate(fallbackWorkout);
+        onClose();
+        return;
+      }
 
       // STEP 4: Enrich with videos (best effort, non-blocking)
+      console.log('🎥 Step 4: Adding video demos...');
       try {
-        for (let i = 0; i < workoutData.exercises.length; i++) {
+        for (let i = 0; i < Math.min(3, workoutData.exercises.length); i++) {
           try {
             const videoResult = await base44.integrations.Core.InvokeLLM({
               prompt: `Find YouTube URL for: "${workoutData.exercises[i].name}". Return ONLY the URL.`,
@@ -317,19 +400,31 @@ Return the normalized workout with the same structure. Output only JSON.`;
               workoutData.exercises[i].demo_video = videoResult.trim().split('\n')[0];
             }
           } catch (err) {
-            // Ignore video failures
+            console.warn(`Video failed for exercise ${i}`);
           }
         }
       } catch (err) {
-        console.warn('Video enrichment failed, continuing without videos');
+        console.warn('Video enrichment skipped');
       }
 
+      console.log('✅ SUCCESS: Generated workout with', workoutData.exercises.length, 'exercises');
       onGenerate(workoutData);
       onClose();
       
     } catch (error) {
-      console.error('Workout generation failed:', error);
-      alert(`Failed to generate workout: ${error.message}`);
+      console.error('❌ FATAL ERROR:', error);
+      const userInput = {
+        goal: formData.goal,
+        category: formData.category,
+        difficulty: formData.difficulty,
+        duration: formData.duration,
+        equipment: formData.equipment,
+        focus: formData.focus,
+        userNotes: formData.userNotes
+      };
+      const fallbackWorkout = getEmergencyFallback(userInput);
+      onGenerate(fallbackWorkout);
+      onClose();
     } finally {
       setGenerating(false);
     }

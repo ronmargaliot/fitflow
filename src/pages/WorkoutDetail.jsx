@@ -37,7 +37,7 @@ import CommentSection from '@/components/social/CommentSection';
 import { useLikes } from '@/components/social/useLikes';
 import { Skeleton } from "@/components/ui/skeleton";
 import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
-import { Wand2, Copy as CopyIcon, Share2 } from 'lucide-react';
+import { Wand2, Copy as CopyIcon } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
 
 export default function WorkoutDetail() {

@@ -18,10 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Sparkles } from 'lucide-react';
+import { Check, X, Sparkles, Upload } from 'lucide-react';
 import { CATEGORIES, BODY_AREAS, DIFFICULTIES } from './WorkoutFilters';
 import ImageUpload from '@/components/common/ImageUpload';
 import AIWorkoutGenerator from './AIWorkoutGenerator';
+import TextImageWorkoutGenerator from './TextImageWorkoutGenerator';
 
 const COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444', 
@@ -30,6 +31,7 @@ const COLORS = [
 
 export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const [showTextImageGenerator, setShowTextImageGenerator] = useState(false);
   const [data, setData] = useState({
     name: '',
     description: '',
@@ -103,18 +105,32 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
               {workout ? 'Edit Workout' : 'Create New Workout'}
             </DialogTitle>
             {!workout && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  onClose();
-                  setShowAIGenerator(true);
-                }}
-                className="border-purple-200 text-purple-600 hover:bg-purple-50"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                AI Generate
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    onClose();
+                    setShowTextImageGenerator(true);
+                  }}
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    onClose();
+                    setShowAIGenerator(true);
+                  }}
+                  className="border-purple-200 text-purple-600 hover:bg-purple-50"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI Generate
+                </Button>
+              </div>
             )}
           </div>
         </DialogHeader>
@@ -273,6 +289,12 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
       <AIWorkoutGenerator
         open={showAIGenerator}
         onClose={() => setShowAIGenerator(false)}
+        onGenerate={handleAIGenerate}
+      />
+
+      <TextImageWorkoutGenerator
+        open={showTextImageGenerator}
+        onClose={() => setShowTextImageGenerator(false)}
         onGenerate={handleAIGenerate}
       />
     </>

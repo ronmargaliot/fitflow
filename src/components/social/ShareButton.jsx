@@ -43,7 +43,9 @@ ${workoutUrl}`;
     };
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsSharing(true);
     
     try {

@@ -37,7 +37,8 @@ import CommentSection from '@/components/social/CommentSection';
 import { useLikes } from '@/components/social/useLikes';
 import { Skeleton } from "@/components/ui/skeleton";
 import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
-import { Wand2, Copy as CopyIcon } from 'lucide-react';
+import { Wand2, Copy as CopyIcon, Share2 } from 'lucide-react';
+import ShareButton from '@/components/social/ShareButton';
 
 export default function WorkoutDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -303,6 +304,11 @@ export default function WorkoutDetail() {
                 <Wand2 className="w-3 h-3 mr-1" />
                 {workout.ai_inspo_count || 0}
               </Badge>
+              <ShareButton 
+                workout={workout} 
+                variant="icon"
+                onShareComplete={() => queryClient.invalidateQueries({ queryKey: ['workout', workoutId] })}
+              />
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Plus, Dumbbell, Loader2, Users, User, Search } from 'lucide-react';
+import { Plus, Dumbbell, Loader2, Users, User, Search, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -74,7 +74,7 @@ export default function Home() {
     
     // Sort
     if (filters.sortBy === 'popular') {
-      filtered.sort((a, b) => (b.copy_count || 0) - (a.copy_count || 0));
+      filtered.sort((a, b) => (b.copy_count || 0) + (b.share_count || 0) - (a.copy_count || 0) - (a.share_count || 0));
     } else if (filters.sortBy === 'liked') {
       filtered.sort((a, b) => {
         const aLikes = allLikes.filter(l => l.workout_id === a.id).length;

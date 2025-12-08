@@ -2,7 +2,8 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2 } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2 } from 'lucide-react';
+import ShareButton from '@/components/social/ShareButton';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -96,6 +97,10 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                 <Wand2 className="w-3 h-3 mr-1" />
                 {workout.ai_inspo_count || 0}
               </Badge>
+              <Badge className="bg-white/90 text-slate-600 text-xs">
+                <Share2 className="w-3 h-3 mr-1" />
+                {workout.share_count || 0}
+              </Badge>
             </div>
 
             {/* Title on image */}
@@ -160,6 +165,9 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                   >
                     <Sparkles className="w-4 h-4" />
                   </Button>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ShareButton workout={workout} variant="icon" />
+                  </div>
                 </div>
               )}
             </div>

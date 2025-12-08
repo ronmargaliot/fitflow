@@ -144,6 +144,28 @@ export default function Home() {
     setShowAIInspiration(true);
   };
 
+  const createLikeMutation = useMutation({
+    mutationFn: (data) => base44.entities.WorkoutLike.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutLikes'] });
+    }
+  });
+
+  const deleteLikeMutation = useMutation({
+    mutationFn: async ({ workout_id, user_email }) => {
+      const likes = await base44.entities.WorkoutLike.filter({ 
+        workout_id: workout_id,
+        created_by: user_email 
+      });
+      if (likes.length > 0) {
+        await base44.entities.WorkoutLike.delete(likes[0].id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutLikes'] });
+    }
+  });
+
   const handleAIGenerate = async (aiWorkoutData) => {
     if (inspirationWorkout) {
       await base44.entities.Workout.update(inspirationWorkout.id, {
@@ -271,6 +293,14 @@ export default function Home() {
                     showCommunityBadge={activeTab === 'community'}
                     onCopy={() => handleCopyWorkout(workout)}
                     onAIInspire={() => handleAIInspire(workout)}
+                    onLike={() => {
+                      const likeData = getLikesForWorkout(workout.id, currentUser?.email);
+                      if (likeData.isLiked) {
+                        deleteLikeMutation.mutate({ workout_id: workout.id, user_email: currentUser?.email });
+                      } else {
+                        createLikeMutation.mutate({ workout_id: workout.id });
+                      }
+                    }}
                     likeData={getLikesForWorkout(workout.id, currentUser?.email)}
                   />
                 </motion.div>

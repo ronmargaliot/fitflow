@@ -19,7 +19,7 @@ const DEFAULT_IMAGES = {
   default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
 };
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, likeData }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData }) {
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
   const coverImage = workout.cover_image || DEFAULT_IMAGES[workout.category] || DEFAULT_IMAGES.default;
@@ -34,6 +34,12 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
     e.preventDefault();
     e.stopPropagation();
     onAIInspire?.();
+  };
+
+  const handleLike = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onLike?.();
   };
 
   return (
@@ -85,22 +91,30 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
 
             {/* Stats badges */}
             <div className="absolute top-2 right-2 flex gap-1">
-              <Badge className="bg-white/90 text-red-500 text-xs">
+              <Badge 
+                className="bg-white/90 text-red-500 text-xs cursor-pointer hover:bg-white transition-colors"
+                onClick={handleLike}
+              >
                 <Heart className={`w-3 h-3 mr-1 ${likeData?.isLiked ? 'fill-current' : ''}`} />
                 {likeData?.likeCount || 0}
               </Badge>
-              <Badge className="bg-white/90 text-blue-600 text-xs">
+              <Badge 
+                className="bg-white/90 text-blue-600 text-xs cursor-pointer hover:bg-white transition-colors"
+                onClick={handleCopy}
+              >
                 <Copy className="w-3 h-3 mr-1" />
                 {workout.copy_count || 0}
               </Badge>
-              <Badge className="bg-white/90 text-purple-600 text-xs">
+              <Badge 
+                className="bg-white/90 text-purple-600 text-xs cursor-pointer hover:bg-white transition-colors"
+                onClick={handleAIInspire}
+              >
                 <Wand2 className="w-3 h-3 mr-1" />
                 {workout.ai_inspo_count || 0}
               </Badge>
-              <Badge className="bg-white/90 text-slate-600 text-xs">
-                <Share2 className="w-3 h-3 mr-1" />
-                {workout.share_count || 0}
-              </Badge>
+              <div onClick={(e) => e.stopPropagation()}>
+                <ShareButton workout={workout} variant="icon" />
+              </div>
             </div>
 
             {/* Title on image */}

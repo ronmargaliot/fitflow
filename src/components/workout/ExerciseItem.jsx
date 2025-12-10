@@ -7,6 +7,16 @@ import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, T
 import ExerciseDemoModal from './ExerciseDemoModal';
 import VideoSearchModal from './VideoSearchModal';
 import { motion } from 'framer-motion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ExerciseItem({ 
   exercise, 
@@ -21,6 +31,7 @@ export default function ExerciseItem({
   const [editData, setEditData] = useState(exercise);
   const [showDemo, setShowDemo] = useState(false);
   const [showVideoSearch, setShowVideoSearch] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const handleVideoSelect = React.useCallback((url) => {
     setEditData(prev => ({ ...prev, demo_video: url }));
@@ -256,7 +267,7 @@ export default function ExerciseItem({
             </div>
             
             {!readOnly && (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -269,7 +280,7 @@ export default function ExerciseItem({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-slate-500 hover:text-red-600"
-                    onClick={onDelete}
+                    onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -284,6 +295,26 @@ export default function ExerciseItem({
         onClose={() => setShowDemo(false)}
         exercise={exercise}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Exercise</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{exercise.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={onDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </motion.div>
 
       {showVideoSearch && (

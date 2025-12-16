@@ -555,6 +555,44 @@ export default function ActiveWorkout() {
                           />
                         </div>
                         
+                        {/* Exercise Type Toggle - only if no sets completed */}
+                        {getCompletedSetsCount(editData.id) === 0 && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              variant={editData.exercise_type !== 'time' ? 'default' : 'outline'}
+                              size="sm"
+                              className={`flex items-center justify-center gap-2 ${
+                                editData.exercise_type !== 'time'
+                                  ? 'bg-slate-500 text-white hover:bg-slate-400' 
+                                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditData({ ...editData, exercise_type: 'reps' });
+                              }}
+                            >
+                              Rep-based
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={editData.exercise_type === 'time' ? 'default' : 'outline'}
+                              size="sm"
+                              className={`flex items-center justify-center gap-2 ${
+                                editData.exercise_type === 'time'
+                                  ? 'bg-green-600 text-white hover:bg-green-700' 
+                                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditData({ ...editData, exercise_type: 'time' });
+                              }}
+                            >
+                              Time-based
+                            </Button>
+                          </div>
+                        )}
+                        
                         <div className="grid grid-cols-4 gap-2">
                           <div>
                             <label className="text-xs text-slate-400 block mb-1">Sets</label>
@@ -565,14 +603,26 @@ export default function ActiveWorkout() {
                               className="bg-slate-600 border-slate-500 text-white h-8"
                             />
                           </div>
-                          <div>
-                            <label className="text-xs text-slate-400 block mb-1">Reps</label>
-                            <Input
-                              value={editData.reps}
-                              onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
-                              className="bg-slate-600 border-slate-500 text-white h-8"
-                            />
-                          </div>
+                          {editData.exercise_type === 'time' ? (
+                            <div>
+                              <label className="text-xs text-slate-400 block mb-1">Duration (s)</label>
+                              <Input
+                                type="number"
+                                value={editData.duration_seconds || 30}
+                                onChange={(e) => setEditData({ ...editData, duration_seconds: parseInt(e.target.value) || 30 })}
+                                className="bg-slate-600 border-slate-500 text-white h-8"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <label className="text-xs text-slate-400 block mb-1">Reps</label>
+                              <Input
+                                value={editData.reps}
+                                onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
+                                className="bg-slate-600 border-slate-500 text-white h-8"
+                              />
+                            </div>
+                          )}
                           <div>
                             <label className="text-xs text-slate-400 block mb-1">Rest (s)</label>
                             <Input
@@ -751,15 +801,27 @@ export default function ActiveWorkout() {
                 Start Timer
               </Button>
             ) : (
-              <Button
-                size="lg"
-                className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
-                onClick={handleCompleteSet}
-                disabled={isResting}
-              >
-                <Check className="w-5 h-5 mr-2" />
-                Complete Set {currentSet}
-              </Button>
+              currentSet === currentExercise.sets && currentExerciseIndex === exercises.length - 1 ? (
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg bg-green-600 text-white hover:bg-green-700 shadow-xl"
+                  onClick={() => setShowFinishDialog(true)}
+                  disabled={isResting}
+                >
+                  <Flag className="w-5 h-5 mr-2" />
+                  Finish Workout
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
+                  onClick={handleCompleteSet}
+                  disabled={isResting}
+                >
+                  <Check className="w-5 h-5 mr-2" />
+                  Complete Set {currentSet}
+                </Button>
+              )
             )}
           </div>
         </div>

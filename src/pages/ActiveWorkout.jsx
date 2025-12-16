@@ -791,7 +791,17 @@ export default function ActiveWorkout() {
               </div>
             </div>
             
-            {currentExercise.exercise_type === 'time' ? (
+            {currentSet === currentExercise.sets && currentExerciseIndex === exercises.length - 1 ? (
+              <Button
+                size="lg"
+                className="w-full h-14 text-lg bg-green-600 text-white hover:bg-green-700 shadow-xl"
+                onClick={() => setShowFinishDialog(true)}
+                disabled={isResting}
+              >
+                <Flag className="w-5 h-5 mr-2" />
+                Finish Workout
+              </Button>
+            ) : currentExercise.exercise_type === 'time' ? (
               <Button
                 size="lg"
                 className="w-full h-14 text-lg bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 text-white hover:opacity-90 shadow-xl"
@@ -801,27 +811,15 @@ export default function ActiveWorkout() {
                 Start Timer
               </Button>
             ) : (
-              currentSet === currentExercise.sets && currentExerciseIndex === exercises.length - 1 ? (
-                <Button
-                  size="lg"
-                  className="w-full h-14 text-lg bg-green-600 text-white hover:bg-green-700 shadow-xl"
-                  onClick={() => setShowFinishDialog(true)}
-                  disabled={isResting}
-                >
-                  <Flag className="w-5 h-5 mr-2" />
-                  Finish Workout
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
-                  onClick={handleCompleteSet}
-                  disabled={isResting}
-                >
-                  <Check className="w-5 h-5 mr-2" />
-                  Complete Set {currentSet}
-                </Button>
-              )
+              <Button
+                size="lg"
+                className="w-full h-14 text-lg bg-white text-slate-900 hover:bg-slate-100 shadow-xl"
+                onClick={handleCompleteSet}
+                disabled={isResting}
+              >
+                <Check className="w-5 h-5 mr-2" />
+                Complete Set {currentSet}
+              </Button>
             )}
           </div>
         </div>

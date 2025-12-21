@@ -1,19 +1,19 @@
-import Home from './pages/Home';
-import WorkoutDetail from './pages/WorkoutDetail';
-import Progress from './pages/Progress';
-import Landing from './pages/Landing';
 import ActiveWorkout from './pages/ActiveWorkout';
 import FullScreenTimer from './pages/FullScreenTimer';
+import Home from './pages/Home';
+import Landing from './pages/Landing';
+import Progress from './pages/Progress';
+import WorkoutDetail from './pages/WorkoutDetail';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "WorkoutDetail": WorkoutDetail,
-    "Progress": Progress,
-    "Landing": Landing,
     "ActiveWorkout": ActiveWorkout,
     "FullScreenTimer": FullScreenTimer,
+    "Home": Home,
+    "Landing": Landing,
+    "Progress": Progress,
+    "WorkoutDetail": WorkoutDetail,
 }
 
 export const pagesConfig = {

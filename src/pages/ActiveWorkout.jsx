@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { 
   ArrowLeft, Loader2, Check, SkipForward, 
   Clock, Weight, MessageSquare, Pencil, X, Save,
-  Timer, Flag, Play
+  Timer, Flag, Play, Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -37,6 +37,7 @@ export default function ActiveWorkout() {
   
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
+  const [currentSubExerciseIndex, setCurrentSubExerciseIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState({});
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(0);
@@ -173,6 +174,8 @@ export default function ActiveWorkout() {
 
   const exercises = localExercises;
   const currentExercise = exercises[currentExerciseIndex];
+  const isSuperset = currentExercise?.exercise_type === 'superset';
+  const currentSubExercise = isSuperset && currentExercise?.superset_exercises?.[currentSubExerciseIndex];
   
   const totalSets = exercises.reduce((acc, ex) => acc + (ex.sets || 0), 0);
   const completedTotal = Object.values(completedSets).reduce((acc, sets) => acc + sets.length, 0);
@@ -258,12 +261,28 @@ export default function ActiveWorkout() {
     if (!currentExercise) return;
     
     const exerciseId = currentExercise.id;
+    const isSuperset = currentExercise.exercise_type === 'superset';
+    
+    // For supersets, handle sub-exercise progression
+    if (isSuperset) {
+      const totalSubExercises = currentExercise.superset_exercises?.length || 0;
+      
+      // If not the last sub-exercise in the superset, move to next sub-exercise
+      if (currentSubExerciseIndex < totalSubExercises - 1) {
+        setCurrentSubExerciseIndex(currentSubExerciseIndex + 1);
+        return;
+      }
+      
+      // Last sub-exercise completed, mark the set as complete
+      setCurrentSubExerciseIndex(0);
+    }
     
     // Save state for undo
     setUndoState({
       completedSets: { ...completedSets },
       currentSet,
       currentExerciseIndex,
+      currentSubExerciseIndex,
       exerciseId,
       setNumber: currentSet
     });
@@ -288,6 +307,7 @@ export default function ActiveWorkout() {
       if (currentExerciseIndex < exercises.length - 1) {
         setCurrentExerciseIndex(currentExerciseIndex + 1);
         setCurrentSet(1);
+        setCurrentSubExerciseIndex(0);
         const rest = workout?.rest_between_exercises || 120;
         setMaxRestTime(rest);
         setRestTime(rest);
@@ -297,7 +317,7 @@ export default function ActiveWorkout() {
         setShowFinishDialog(true);
       }
     }
-  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, exercises, workout]);
+  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, currentSubExerciseIndex, exercises, workout]);
 
   const handleUndo = useCallback(() => {
     if (!undoState) return;
@@ -305,6 +325,7 @@ export default function ActiveWorkout() {
     setCompletedSets(undoState.completedSets);
     setCurrentSet(undoState.currentSet);
     setCurrentExerciseIndex(undoState.currentExerciseIndex);
+    setCurrentSubExerciseIndex(undoState.currentSubExerciseIndex || 0);
     setIsResting(false);
     setRestTime(0);
     setShowUndo(false);
@@ -325,6 +346,7 @@ export default function ActiveWorkout() {
   const handleExerciseClick = (index) => {
     if (editingExerciseId) return;
     setCurrentExerciseIndex(index);
+    setCurrentSubExerciseIndex(0);
     const completedCount = completedSets[exercises[index]?.id]?.length || 0;
     setCurrentSet(Math.min(completedCount + 1, exercises[index]?.sets || 1));
     setIsResting(false);
@@ -486,7 +508,7 @@ export default function ActiveWorkout() {
                     {isExerciseRest ? 'Rest Between Exercises' : 'Rest Between Sets'}
                   </p>
                   <p className="text-white text-sm font-medium truncate">
-                    Next: {currentExercise.name} - Set {currentSet}
+                    Next: {isSuperset && currentSubExercise ? currentSubExercise.name : currentExercise.name} - Set {currentSet}
                   </p>
                 </div>
                 
@@ -693,26 +715,44 @@ export default function ActiveWorkout() {
                           </div>
                           
                           <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDemoExercise(exercise);
-                              }}
-                              className="flex items-center gap-1.5 group/demo"
-                            >
-                              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                isActive 
-                                  ? 'bg-white/20 group-hover/demo:bg-white/30' 
-                                  : 'bg-slate-600 group-hover/demo:bg-slate-500'
-                              }`}>
-                                <Play className="w-3 h-3 text-white" />
+                            {exercise.exercise_type === 'superset' ? (
+                              <div className="flex flex-wrap gap-1">
+                                <Badge className={`${isActive ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
+                                  <Layers className="w-3 h-3 mr-1" />
+                                  {exercise.sets} sets
+                                </Badge>
+                                {(exercise.superset_exercises || []).map((subEx, subIdx) => (
+                                  <Badge key={subIdx} variant="outline" className={`text-xs ${
+                                    isActive && currentSubExerciseIndex === subIdx
+                                      ? 'border-white text-white'
+                                      : 'border-slate-600 text-slate-400'
+                                  }`}>
+                                    {subEx.name}
+                                  </Badge>
+                                ))}
                               </div>
-                              <Badge className={`${
-                                isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
-                              }`}>
-                                {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
-                              </Badge>
-                            </button>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDemoExercise(exercise);
+                                }}
+                                className="flex items-center gap-1.5 group/demo"
+                              >
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                  isActive 
+                                    ? 'bg-white/20 group-hover/demo:bg-white/30' 
+                                    : 'bg-slate-600 group-hover/demo:bg-slate-500'
+                                }`}>
+                                  <Play className="w-3 h-3 text-white" />
+                                </div>
+                                <Badge className={`${
+                                  isActive ? 'bg-white text-slate-900' : 'bg-slate-700 text-white'
+                                }`}>
+                                  {exercise.sets} × {exercise.exercise_type === 'time' ? `${exercise.duration_seconds || 30}s` : exercise.reps}
+                                </Badge>
+                              </button>
+                            )}
                             
                             {exercise.rest && (
                               <Badge variant="outline" className="text-slate-400 border-slate-600">
@@ -781,9 +821,21 @@ export default function ActiveWorkout() {
         <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-4 z-20">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center justify-between mb-3">
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-slate-400">Current Exercise</p>
-                <p className="text-white font-semibold">{currentExercise.name}</p>
+                {isSuperset && currentSubExercise ? (
+                  <div>
+                    <p className="text-white font-semibold flex items-center gap-1">
+                      <Layers className="w-4 h-4 text-purple-400" />
+                      {currentSubExercise.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Exercise {currentSubExerciseIndex + 1} of {currentExercise.superset_exercises?.length}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-white font-semibold">{currentExercise.name}</p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-sm text-slate-400">Set</p>
@@ -791,7 +843,7 @@ export default function ActiveWorkout() {
               </div>
             </div>
             
-            {currentSet === currentExercise.sets && currentExerciseIndex === exercises.length - 1 ? (
+            {currentSet === currentExercise.sets && currentExerciseIndex === exercises.length - 1 && (!isSuperset || currentSubExerciseIndex === (currentExercise.superset_exercises?.length || 1) - 1) ? (
               <Button
                 size="lg"
                 className="w-full h-14 text-lg bg-green-600 text-white hover:bg-green-700 shadow-xl"
@@ -801,6 +853,27 @@ export default function ActiveWorkout() {
                 <Flag className="w-5 h-5 mr-2" />
                 Finish Workout
               </Button>
+            ) : isSuperset && currentSubExercise ? (
+              currentSubExercise.exercise_type === 'time' ? (
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-600 text-white hover:opacity-90 shadow-xl"
+                  onClick={() => setShowTimerModal(true)}
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Start Timer ({currentSubExercise.duration_seconds}s)
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg bg-purple-600 text-white hover:bg-purple-700 shadow-xl"
+                  onClick={handleCompleteSet}
+                  disabled={isResting}
+                >
+                  <Check className="w-5 h-5 mr-2" />
+                  Complete ({currentSubExercise.reps} reps)
+                </Button>
+              )
             ) : currentExercise.exercise_type === 'time' ? (
               <Button
                 size="lg"
@@ -835,7 +908,7 @@ export default function ActiveWorkout() {
       {/* Full Screen Timer Modal */}
       <FullScreenTimerModal
         open={showTimerModal}
-        exercise={currentExercise}
+        exercise={isSuperset && currentSubExercise ? currentSubExercise : currentExercise}
         currentSet={currentSet}
         totalSets={currentExercise?.sets || 0}
         workout={workout}

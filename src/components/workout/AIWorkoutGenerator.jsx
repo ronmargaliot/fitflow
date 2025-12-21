@@ -63,31 +63,48 @@ Generate a workout with 6-10 exercises. Return JSON in this EXACT structure:
   "exercises": [
     {
       "exercise_name": "Exercise Name",
+      "exercise_type": "reps",
       "primary_muscle_group": "chest|back|legs|arms|shoulders|core",
       "secondary_muscle_groups": ["muscle group"],
       "equipment": "equipment name",
       "is_bodyweight": true,
       "order_index": 1,
-      "sets": [
-        {
-          "set_index": 1,
-          "reps": 10,
-          "load_type": "bodyweight",
-          "target_load_value": null,
-          "rest_seconds": 60,
-          "notes": "form cue"
-        }
-      ],
+      "num_sets": 4,
+      "reps_per_set": 10,
+      "duration_seconds_per_set": null,
+      "target_load_value": null,
+      "rest_seconds": 60,
       "notes": "exercise notes"
     }
   ]
 }
 
+CRITICAL RULES FOR EXERCISE TYPES:
+1. For REP-BASED exercises:
+   - Set "exercise_type": "reps"
+   - Set "reps_per_set" to a number (e.g., 10, 12, 8)
+   - Set "duration_seconds_per_set" to null
+   - Set "num_sets" to 3-5 (ALWAYS include 3-5 sets)
+   
+2. For TIME-BASED exercises (planks, holds, cardio):
+   - Set "exercise_type": "time"
+   - Set "duration_seconds_per_set" to a number (e.g., 30, 45, 60)
+   - Set "reps_per_set" to null
+   - Set "target_load_value" to null or 0 (no weight for time-based)
+   - Set "num_sets" to 3-5 (ALWAYS include 3-5 sets)
+
+3. For SUPERSETS (advanced workouts):
+   - Set "exercise_type": "superset"
+   - Add "superset_exercises" array with 2-4 sub-exercises
+   - Each sub-exercise has: exercise_name, exercise_type (reps or time), reps_per_set OR duration_seconds_per_set, target_load_value, notes
+   - Main superset has "num_sets" (3-5) and "rest_seconds" (rest AFTER completing all sub-exercises)
+
 Constraints:
 - exercises must have length ≥ 6
-- Each exercise must have at least one set in sets
-- order_index and set_index must be 1-based and sequential
-- Use clear exercise names (e.g., "Barbell Bench Press")`;
+- Each exercise MUST have num_sets between 3-5
+- order_index must be 1-based and sequential
+- Use clear exercise names (e.g., "Barbell Bench Press")
+- NEVER put duration values in weight/load fields`;
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
@@ -111,30 +128,35 @@ Constraints:
               minItems: 6,
               items: {
                 type: 'object',
-                required: ['exercise_name', 'sets'],
+                required: ['exercise_name', 'exercise_type', 'num_sets'],
                 properties: {
                   exercise_name: { type: 'string' },
+                  exercise_type: { type: 'string', enum: ['reps', 'time', 'superset'] },
                   primary_muscle_group: { type: 'string' },
                   secondary_muscle_groups: { type: 'array', items: { type: 'string' } },
                   equipment: { type: 'string' },
                   is_bodyweight: { type: 'boolean' },
                   order_index: { type: 'number' },
-                  sets: {
+                  num_sets: { type: 'number', minimum: 3, maximum: 5 },
+                  reps_per_set: { type: ['number', 'null'] },
+                  duration_seconds_per_set: { type: ['number', 'null'] },
+                  target_load_value: { type: ['number', 'null'] },
+                  rest_seconds: { type: 'number' },
+                  notes: { type: 'string' },
+                  superset_exercises: {
                     type: 'array',
-                    minItems: 1,
                     items: {
                       type: 'object',
                       properties: {
-                        set_index: { type: 'number' },
-                        reps: { type: 'number' },
-                        load_type: { type: 'string' },
+                        exercise_name: { type: 'string' },
+                        exercise_type: { type: 'string', enum: ['reps', 'time'] },
+                        reps_per_set: { type: ['number', 'null'] },
+                        duration_seconds_per_set: { type: ['number', 'null'] },
                         target_load_value: { type: ['number', 'null'] },
-                        rest_seconds: { type: 'number' },
                         notes: { type: 'string' }
                       }
                     }
-                  },
-                  notes: { type: 'string' }
+                  }
                 }
               }
             }
@@ -241,22 +263,44 @@ Return the normalized workout with the same structure. Output only JSON.`;
   // STEP 3: Transform to app format
   const transformToAppFormat = (normalizedWorkout, userInput) => {
     const exercises = normalizedWorkout.exercises.map((ex, idx) => {
-      // Determine exercise type based on load_type
-      const firstSet = ex.sets[0];
-      const isTimeBased = firstSet?.load_type === 'time';
-      
-      return {
+      const baseExercise = {
         id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
         name: ex.exercise_name,
-        sets: ex.sets.length,
-        exercise_type: isTimeBased ? 'time' : 'reps',
-        reps: !isTimeBased ? String(firstSet?.reps || 10) : undefined,
-        duration_seconds: isTimeBased ? (firstSet?.reps || 30) : undefined,
-        rest: firstSet?.rest_seconds || 60,
-        weight: firstSet?.target_load_value || 0,
+        sets: ex.num_sets || 3,
+        exercise_type: ex.exercise_type || 'reps',
+        rest: ex.rest_seconds || 60,
         notes: ex.notes || '',
         demo_video: ''
       };
+
+      // Handle superset
+      if (ex.exercise_type === 'superset' && ex.superset_exercises) {
+        baseExercise.superset_exercises = ex.superset_exercises.map((subEx, subIdx) => ({
+          id: `sub_${Date.now()}_${idx}_${subIdx}_${Math.random().toString(36).substr(2, 9)}`,
+          name: subEx.exercise_name,
+          exercise_type: subEx.exercise_type || 'reps',
+          reps: subEx.exercise_type === 'reps' ? String(subEx.reps_per_set || 10) : undefined,
+          duration_seconds: subEx.exercise_type === 'time' ? (subEx.duration_seconds_per_set || 30) : undefined,
+          weight: subEx.target_load_value || 0,
+          notes: subEx.notes || '',
+          demo_video: ''
+        }));
+        baseExercise.reps = undefined;
+        baseExercise.duration_seconds = undefined;
+        baseExercise.weight = 0;
+      } else if (ex.exercise_type === 'time') {
+        // Time-based exercise
+        baseExercise.duration_seconds = ex.duration_seconds_per_set || 30;
+        baseExercise.reps = undefined;
+        baseExercise.weight = 0;
+      } else {
+        // Rep-based exercise
+        baseExercise.reps = String(ex.reps_per_set || 10);
+        baseExercise.duration_seconds = undefined;
+        baseExercise.weight = ex.target_load_value || 0;
+      }
+
+      return baseExercise;
     });
 
     return {

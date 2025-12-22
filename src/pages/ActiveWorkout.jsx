@@ -349,9 +349,7 @@ export default function ActiveWorkout() {
     setCurrentSubExerciseIndex(0);
     const completedCount = completedSets[exercises[index]?.id]?.length || 0;
     setCurrentSet(Math.min(completedCount + 1, exercises[index]?.sets || 1));
-    setIsResting(false);
-    setRestTime(0);
-    setIsExerciseRest(false);
+    // Don't reset timer when switching exercises - let it continue
   };
 
   const handleStartEdit = (exercise, e) => {

@@ -2,16 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Home, TrendingUp, User, LogOut, Dumbbell } from 'lucide-react';
+import { Home, TrendingUp, User, Dumbbell } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -29,9 +22,7 @@ export default function Layout({ children, currentPageName }) {
     checkAuth();
   }, []);
 
-  const handleLogout = () => {
-    base44.auth.logout();
-  };
+
 
   // Pages without navigation
   const hideNav = ['ActiveWorkout', 'Landing'].includes(currentPageName);
@@ -96,31 +87,6 @@ export default function Layout({ children, currentPageName }) {
                 <span className="text-xs">Profile</span>
               </Button>
             </Link>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto py-2 px-4">
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={user?.picture || user?.avatar_url || user?.photo_url} alt={user?.full_name} />
-                    <AvatarFallback className="text-xs bg-slate-200">
-                      {user?.full_name?.[0] || user?.email?.[0] || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-slate-500">Profile</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user?.full_name || 'User'}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </nav>

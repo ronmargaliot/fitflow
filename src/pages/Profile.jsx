@@ -170,7 +170,15 @@ export default function Profile() {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-between items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => base44.auth.logout()}
+                >
+                  Sign Out
+                </Button>
                 <Button
                   type="submit"
                   disabled={updateMutation.isPending}

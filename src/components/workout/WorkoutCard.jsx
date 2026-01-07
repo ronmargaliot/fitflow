@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import ShareButton from '@/components/social/ShareButton';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
 
 const DEFAULT_IMAGES = {
   strength: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400&h=200&fit=crop',
@@ -20,9 +21,28 @@ const DEFAULT_IMAGES = {
 };
 
 export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData }) {
+  const [creatorUsername, setCreatorUsername] = useState(null);
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
   const coverImage = workout.cover_image || DEFAULT_IMAGES[workout.category] || DEFAULT_IMAGES.default;
+
+  useEffect(() => {
+    const fetchCreatorUsername = async () => {
+      if (showCommunityBadge && workout.created_by) {
+        try {
+          const users = await base44.entities.User.filter({ email: workout.created_by });
+          if (users.length > 0 && users[0].username) {
+            setCreatorUsername(users[0].username);
+          } else {
+            setCreatorUsername(workout.created_by.split('@')[0]);
+          }
+        } catch (error) {
+          setCreatorUsername(workout.created_by.split('@')[0]);
+        }
+      }
+    };
+    fetchCreatorUsername();
+  }, [workout.created_by, showCommunityBadge]);
 
   const handleCopy = (e) => {
     e.preventDefault();
@@ -130,6 +150,12 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
             {workout.description && (
               <p className="text-sm text-slate-500 line-clamp-2 mb-3 flex-shrink-0">
                 {workout.description}
+              </p>
+            )}
+
+            {showCommunityBadge && creatorUsername && (
+              <p className="text-xs text-slate-500 mb-3 flex-shrink-0">
+                Created by: <span className="font-medium text-slate-700">{creatorUsername}</span>
               </p>
             )}
             

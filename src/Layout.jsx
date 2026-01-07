@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Home, TrendingUp, User, Dumbbell } from 'lucide-react';
+import { Home, TrendingUp, User, Dumbbell, Bell } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from '@tanstack/react-query';
 
 
 export default function Layout({ children, currentPageName }) {
@@ -21,6 +23,15 @@ export default function Layout({ children, currentPageName }) {
     };
     checkAuth();
   }, []);
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications', user?.email],
+    queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email }),
+    enabled: !!user?.email,
+    refetchInterval: 30000
+  });
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
 
 
@@ -73,6 +84,23 @@ export default function Layout({ children, currentPageName }) {
               >
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-xs">Progress</span>
+              </Button>
+            </Link>
+
+            <Link to={createPageUrl('Notifications')}>
+              <Button 
+                variant="ghost" 
+                className={`flex flex-col items-center gap-1 h-auto py-2 px-3 relative ${
+                  currentPageName === 'Notifications' ? 'text-indigo-600' : 'text-slate-500'
+                }`}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Badge>
+                )}
+                <span className="text-xs">Notifications</span>
               </Button>
             </Link>
 

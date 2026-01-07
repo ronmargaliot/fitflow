@@ -122,6 +122,23 @@ export default function Home() {
       await base44.entities.Workout.update(workout.id, {
         copy_count: (workout.copy_count || 0) + 1
       });
+
+      // Create notification for workout owner
+      if (workout.created_by !== currentUser?.email) {
+        const users = await base44.entities.User.filter({ email: currentUser?.email });
+        const actorUsername = users.length > 0 && users[0].username 
+          ? users[0].username 
+          : currentUser?.email.split('@')[0];
+        
+        await base44.entities.Notification.create({
+          type: 'copy',
+          workout_id: workout.id,
+          workout_name: workout.name,
+          actor_email: currentUser?.email,
+          actor_username: actorUsername,
+          recipient_email: workout.created_by
+        });
+      }
       
       return copy;
     },
@@ -171,6 +188,23 @@ export default function Home() {
       await base44.entities.Workout.update(inspirationWorkout.id, {
         ai_inspo_count: (inspirationWorkout.ai_inspo_count || 0) + 1
       });
+
+      // Create notification for workout owner
+      if (inspirationWorkout.created_by !== currentUser?.email) {
+        const users = await base44.entities.User.filter({ email: currentUser?.email });
+        const actorUsername = users.length > 0 && users[0].username 
+          ? users[0].username 
+          : currentUser?.email.split('@')[0];
+        
+        await base44.entities.Notification.create({
+          type: 'ai_inspire',
+          workout_id: inspirationWorkout.id,
+          workout_name: inspirationWorkout.name,
+          actor_email: currentUser?.email,
+          actor_username: actorUsername,
+          recipient_email: inspirationWorkout.created_by
+        });
+      }
     }
     createMutation.mutate({
       ...aiWorkoutData,

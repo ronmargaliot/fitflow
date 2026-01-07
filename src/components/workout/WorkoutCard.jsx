@@ -20,7 +20,7 @@ const DEFAULT_IMAGES = {
   default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
 };
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData, currentUser }) {
   const [creatorUsername, setCreatorUsername] = useState(null);
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
@@ -133,7 +133,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                 {workout.ai_inspo_count || 0}
               </Badge>
               <div onClick={(e) => e.stopPropagation()}>
-                <ShareButton workout={workout} variant="icon" />
+                <ShareButton workout={workout} variant="icon" currentUser={currentUser} />
               </div>
             </div>
 
@@ -206,7 +206,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                     <Sparkles className="w-4 h-4" />
                   </Button>
                   <div onClick={(e) => e.stopPropagation()}>
-                    <ShareButton workout={workout} variant="icon" />
+                    <ShareButton workout={workout} variant="icon" currentUser={currentUser} />
                   </div>
                 </div>
               )}

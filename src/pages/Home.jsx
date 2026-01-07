@@ -336,6 +336,7 @@ export default function Home() {
                       }
                     }}
                     likeData={getLikesForWorkout(workout.id, currentUser?.email)}
+                    currentUser={currentUser}
                   />
                 </motion.div>
               ))}

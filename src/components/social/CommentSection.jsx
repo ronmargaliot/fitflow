@@ -62,7 +62,34 @@ export default function CommentSection({ workoutId, currentUser }) {
   });
 
   const addMutation = useMutation({
-    mutationFn: (data) => base44.entities.WorkoutComment.create(data),
+    mutationFn: async (data) => {
+      const comment = await base44.entities.WorkoutComment.create(data);
+      
+      // Fetch workout to get owner info
+      const workouts = await base44.entities.Workout.filter({ id: workoutId });
+      if (workouts.length > 0) {
+        const workout = workouts[0];
+        
+        // Create notification for workout owner if not commenting on own workout
+        if (workout.created_by !== currentUser?.email) {
+          const users = await base44.entities.User.filter({ email: currentUser?.email });
+          const actorUsername = users.length > 0 && users[0].username 
+            ? users[0].username 
+            : currentUser?.email.split('@')[0];
+          
+          await base44.entities.Notification.create({
+            type: 'comment',
+            workout_id: workoutId,
+            workout_name: workout.name,
+            actor_email: currentUser?.email,
+            actor_username: actorUsername,
+            recipient_email: workout.created_by
+          });
+        }
+      }
+      
+      return comment;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', workoutId] });
       setContent('');

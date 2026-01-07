@@ -4,7 +4,7 @@ import { Share2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function ShareButton({ workout, onShareComplete, variant = "default" }) {
+export default function ShareButton({ workout, onShareComplete, variant = "default", currentUser }) {
   const [isSharing, setIsSharing] = useState(false);
 
   const generateShareContent = () => {
@@ -59,6 +59,23 @@ ${workoutUrl}`;
         await base44.entities.Workout.update(workout.id, {
           share_count: (workout.share_count || 0) + 1
         });
+
+        // Create notification for workout owner
+        if (currentUser && workout.created_by !== currentUser?.email) {
+          const users = await base44.entities.User.filter({ email: currentUser?.email });
+          const actorUsername = users.length > 0 && users[0].username 
+            ? users[0].username 
+            : currentUser?.email.split('@')[0];
+          
+          await base44.entities.Notification.create({
+            type: 'share',
+            workout_id: workout.id,
+            workout_name: workout.name,
+            actor_email: currentUser?.email,
+            actor_username: actorUsername,
+            recipient_email: workout.created_by
+          });
+        }
         
         if (onShareComplete) {
           onShareComplete();
@@ -74,6 +91,23 @@ ${workoutUrl}`;
         await base44.entities.Workout.update(workout.id, {
           share_count: (workout.share_count || 0) + 1
         });
+
+        // Create notification for workout owner
+        if (currentUser && workout.created_by !== currentUser?.email) {
+          const users = await base44.entities.User.filter({ email: currentUser?.email });
+          const actorUsername = users.length > 0 && users[0].username 
+            ? users[0].username 
+            : currentUser?.email.split('@')[0];
+          
+          await base44.entities.Notification.create({
+            type: 'share',
+            workout_id: workout.id,
+            workout_name: workout.name,
+            actor_email: currentUser?.email,
+            actor_username: actorUsername,
+            recipient_email: workout.created_by
+          });
+        }
         
         if (onShareComplete) {
           onShareComplete();

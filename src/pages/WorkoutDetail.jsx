@@ -307,6 +307,7 @@ export default function WorkoutDetail() {
               <ShareButton 
                 workout={workout} 
                 variant="icon"
+                currentUser={currentUser}
                 onShareComplete={() => queryClient.invalidateQueries({ queryKey: ['workout', workoutId] })}
               />
             </div>

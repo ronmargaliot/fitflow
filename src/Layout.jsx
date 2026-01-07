@@ -64,7 +64,7 @@ export default function Layout({ children, currentPageName }) {
             <Link to={createPageUrl('Home')}>
               <Button 
                 variant="ghost" 
-                className={`flex flex-col items-center gap-1 h-auto py-2 px-4 ${
+                className={`flex flex-col items-center gap-1 h-auto py-2 px-3 ${
                   currentPageName === 'Home' ? 'text-indigo-600' : 'text-slate-500'
                 }`}
               >
@@ -82,6 +82,18 @@ export default function Layout({ children, currentPageName }) {
               >
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-xs">Progress</span>
+              </Button>
+            </Link>
+
+            <Link to={createPageUrl('Profile')}>
+              <Button 
+                variant="ghost" 
+                className={`flex flex-col items-center gap-1 h-auto py-2 px-4 ${
+                  currentPageName === 'Profile' ? 'text-indigo-600' : 'text-slate-500'
+                }`}
+              >
+                <User className="w-5 h-5" />
+                <span className="text-xs">Profile</span>
               </Button>
             </Link>
 

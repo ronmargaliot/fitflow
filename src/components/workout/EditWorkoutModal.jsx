@@ -87,7 +87,20 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!data.name.trim()) return;
-    onSave(data);
+    
+    // If editing and default_rest changed, update all exercises that don't have custom rest
+    if (workout && workout.exercises && data.default_rest !== workout.default_rest) {
+      const updatedExercises = workout.exercises.map(ex => {
+        // Only update if the exercise was using the old default rest
+        if (!ex.rest || ex.rest === workout.default_rest) {
+          return { ...ex, rest: data.default_rest };
+        }
+        return ex;
+      });
+      onSave({ ...data, exercises: updatedExercises });
+    } else {
+      onSave(data);
+    }
     onClose();
   };
 

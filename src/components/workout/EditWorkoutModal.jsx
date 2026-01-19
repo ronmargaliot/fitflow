@@ -225,7 +225,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="duration">Duration (min)</Label>
               <Input
@@ -237,7 +237,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
               />
             </div>
             <div>
-              <Label htmlFor="rest">Rest/Sets (s)</Label>
+              <Label htmlFor="rest">Default Rest Between Sets (s)</Label>
               <Input
                 id="rest"
                 type="number"
@@ -245,16 +245,7 @@ export default function EditWorkoutModal({ open, onClose, workout, onSave }) {
                 onChange={(e) => setData({ ...data, default_rest: parseInt(e.target.value) || 90 })}
                 className="mt-1"
               />
-            </div>
-            <div>
-              <Label htmlFor="rest_exercises">Rest/Exercises (s)</Label>
-              <Input
-                id="rest_exercises"
-                type="number"
-                value={data.rest_between_exercises}
-                onChange={(e) => setData({ ...data, rest_between_exercises: parseInt(e.target.value) || 120 })}
-                className="mt-1"
-              />
+              <p className="text-xs text-slate-500 mt-1">Can be overridden per exercise</p>
             </div>
           </div>
           

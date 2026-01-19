@@ -321,16 +321,29 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="weight">Weight (kg) - optional</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  value={exercise.weight || ''}
-                  onChange={(e) => setExercise({ ...exercise, weight: parseFloat(e.target.value) || 0 })}
-                  className="mt-1"
-                  placeholder="0"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="weight">Weight (kg) - optional</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    value={exercise.weight || ''}
+                    onChange={(e) => setExercise({ ...exercise, weight: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rest_after">Rest After Exercise (s)</Label>
+                  <Input
+                    id="rest_after"
+                    type="number"
+                    value={exercise.rest_after_exercise || ''}
+                    onChange={(e) => setExercise({ ...exercise, rest_after_exercise: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
+                    placeholder="120"
+                  />
+                </div>
               </div>
             </>
           )}

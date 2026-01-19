@@ -318,13 +318,23 @@ export default function ExerciseItem({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">Notes</label>
+                  <label className="text-xs text-slate-500 mb-1 block">Rest After Exercise (s)</label>
                   <Input
-                    value={editData.notes || ''}
-                    onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                    placeholder="Notes"
+                    type="number"
+                    value={editData.rest_after_exercise || ''}
+                    onChange={(e) => setEditData({ ...editData, rest_after_exercise: parseInt(e.target.value) || 0 })}
+                    placeholder="120"
                   />
                 </div>
+              </div>
+              
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Notes</label>
+                <Input
+                  value={editData.notes || ''}
+                  onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                  placeholder="Notes"
+                />
               </div>
               
               <div>

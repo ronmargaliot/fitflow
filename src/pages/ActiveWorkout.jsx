@@ -308,7 +308,7 @@ export default function ActiveWorkout() {
         setCurrentExerciseIndex(currentExerciseIndex + 1);
         setCurrentSet(1);
         setCurrentSubExerciseIndex(0);
-        const rest = workout?.rest_between_exercises || 120;
+        const rest = currentExercise.rest_after_exercise || 120;
         setMaxRestTime(rest);
         setRestTime(rest);
         setIsResting(true);

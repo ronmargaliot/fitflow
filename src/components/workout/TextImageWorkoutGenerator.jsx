@@ -137,6 +137,7 @@ Return structured data that can be used to create a workout.`;
             exercise_type: 'reps',
             reps: ex.reps || '10',
             rest: ex.rest || 60,
+            rest_after_exercise: ex.rest_after_exercise || 120,
             weight: ex.weight || 0,
             notes: ex.notes || '',
             demo_video: demoVideo

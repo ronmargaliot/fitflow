@@ -233,7 +233,50 @@ export default function ActiveWorkout() {
   }, [exercises, completedSets]);
 
   const handleFinishWorkout = async () => {
-    const { totalVolume, totalReps, exercisesCompleted } = calculateSessionStats();
+    // If we're on the last set of the last exercise, complete it first
+    const isOnLastExercise = currentExerciseIndex === exercises.length - 1;
+    const isOnLastSet = currentSet === currentExercise?.sets;
+    const isSuperset = currentExercise?.exercise_type === 'superset';
+    const isOnLastSubExercise = !isSuperset || currentSubExerciseIndex === (currentExercise?.superset_exercises?.length || 1) - 1;
+    
+    let finalCompletedSets = { ...completedSets };
+    
+    if (isOnLastExercise && isOnLastSet && isOnLastSubExercise && currentExercise) {
+      const exerciseId = currentExercise.id;
+      if (!finalCompletedSets[exerciseId]) {
+        finalCompletedSets[exerciseId] = [];
+      }
+      // Only add the last set if it's not already counted
+      if (!finalCompletedSets[exerciseId].includes(currentSet)) {
+        finalCompletedSets[exerciseId] = [...finalCompletedSets[exerciseId], currentSet];
+      }
+    }
+    
+    // Recalculate stats with the final completed sets
+    let totalVolume = 0;
+    let totalReps = 0;
+    const exercisesCompleted = [];
+
+    exercises.forEach(ex => {
+      const setsCompleted = finalCompletedSets[ex.id]?.length || 0;
+      const repsPerSet = parseInt(ex.reps) || 0;
+      const weight = ex.weight || 0;
+      
+      totalReps += setsCompleted * repsPerSet;
+      totalVolume += setsCompleted * repsPerSet * weight;
+      
+      if (setsCompleted > 0) {
+        exercisesCompleted.push({
+          name: ex.name,
+          sets_completed: setsCompleted,
+          total_sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight || 0
+        });
+      }
+    });
+    
+    const finalCompletedTotal = Object.values(finalCompletedSets).reduce((acc, sets) => acc + sets.length, 0);
     const finishedAt = new Date();
     
     await createSessionMutation.mutateAsync({
@@ -242,12 +285,12 @@ export default function ActiveWorkout() {
       started_at: startTime.toISOString(),
       finished_at: finishedAt.toISOString(),
       duration_seconds: elapsedTime,
-      completed_sets: completedTotal,
+      completed_sets: finalCompletedTotal,
       total_sets: totalSets,
       total_volume: totalVolume,
       total_reps: totalReps,
       exercises_completed: exercisesCompleted,
-      is_complete: completedTotal >= totalSets
+      is_complete: finalCompletedTotal >= totalSets
     });
 
     // Clear the active state

@@ -117,18 +117,32 @@ Return structured data that can be used to create a workout.`;
         });
       }
 
-      // Transform to app format
-      const exercises = (extractedData.exercises || []).map((ex, idx) => ({
-        id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
-        name: ex.name,
-        sets: ex.sets || 3,
-        exercise_type: 'reps',
-        reps: ex.reps || '10',
-        rest: ex.rest || 60,
-        weight: ex.weight || 0,
-        notes: ex.notes || '',
-        demo_video: ''
-      }));
+      // Transform to app format and add YouTube demo links
+      const exercises = await Promise.all(
+        (extractedData.exercises || []).map(async (ex, idx) => {
+          // Search for exercise demo on YouTube
+          let demoVideo = '';
+          try {
+            const searchQuery = `${ex.name} exercise form tutorial`;
+            const encodedQuery = encodeURIComponent(searchQuery);
+            demoVideo = `https://www.youtube.com/results?search_query=${encodedQuery}`;
+          } catch (error) {
+            console.error('Error generating demo link:', error);
+          }
+
+          return {
+            id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+            name: ex.name,
+            sets: ex.sets || 3,
+            exercise_type: 'reps',
+            reps: ex.reps || '10',
+            rest: ex.rest || 60,
+            weight: ex.weight || 0,
+            notes: ex.notes || '',
+            demo_video: demoVideo
+          };
+        })
+      );
 
       const workoutData = {
         name: extractedData.workout_name || 'Imported Workout',

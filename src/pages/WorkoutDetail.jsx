@@ -160,6 +160,24 @@ export default function WorkoutDetail() {
     await updateMutation.mutateAsync({
       ai_inspo_count: (workout.ai_inspo_count || 0) + 1
     });
+
+    // Create notification for workout owner
+    if (workout.created_by !== currentUser?.email) {
+      const users = await base44.entities.User.filter({ email: currentUser?.email });
+      const actorUsername = users.length > 0 && users[0].username 
+        ? users[0].username 
+        : currentUser?.email.split('@')[0];
+
+      await base44.entities.Notification.create({
+        type: 'ai_inspire',
+        workout_id: workoutId,
+        workout_name: workout.name,
+        actor_email: currentUser?.email,
+        actor_username: actorUsername,
+        recipient_email: workout.created_by
+      });
+    }
+
     createMutation.mutate({
       ...aiWorkoutData,
       original_workout_id: workoutId,

@@ -15,22 +15,30 @@ export function useLikes(workoutId, currentUserEmail) {
   const userLike = likes.find(like => like.created_by === currentUserEmail);
 
   const likeMutation = useMutation({
-    mutationFn: async () => {
-      if (isLiked && userLike) {
-        await base44.entities.WorkoutLike.delete(userLike.id);
+    mutationFn: async ({ shouldUnlike, likeId }) => {
+      if (shouldUnlike) {
+        await base44.entities.WorkoutLike.delete(likeId);
       } else {
         await base44.entities.WorkoutLike.create({ workout_id: workoutId });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['likes', workoutId] });
+      queryClient.invalidateQueries({ queryKey: ['allLikes'] });
     }
   });
+
+  const toggleLike = () => {
+    likeMutation.mutate({
+      shouldUnlike: isLiked,
+      likeId: userLike?.id
+    });
+  };
 
   return {
     isLiked,
     likeCount,
-    toggleLike: () => likeMutation.mutate(),
+    toggleLike,
     isLoading: likeMutation.isPending
   };
 }

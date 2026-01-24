@@ -144,6 +144,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      queryClient.invalidateQueries({ queryKey: ['allLikes'] });
       setActiveTab('my');
     }
   });

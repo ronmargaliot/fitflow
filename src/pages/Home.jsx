@@ -162,25 +162,41 @@ export default function Home() {
     setShowAIInspiration(true);
   };
 
-  const createLikeMutation = useMutation({
-    mutationFn: (data) => base44.entities.WorkoutLike.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workoutLikes'] });
-    }
-  });
-
-  const deleteLikeMutation = useMutation({
-    mutationFn: async ({ workout_id, user_email }) => {
-      const likes = await base44.entities.WorkoutLike.filter({ 
-        workout_id: workout_id,
-        created_by: user_email 
-      });
-      if (likes.length > 0) {
-        await base44.entities.WorkoutLike.delete(likes[0].id);
+  const toggleLikeMutation = useMutation({
+    mutationFn: async ({ workout_id, user_email, isLiked }) => {
+      if (isLiked) {
+        const likes = await base44.entities.WorkoutLike.filter({ 
+          workout_id: workout_id,
+          created_by: user_email 
+        });
+        if (likes.length > 0) {
+          await base44.entities.WorkoutLike.delete(likes[0].id);
+        }
+      } else {
+        await base44.entities.WorkoutLike.create({ workout_id });
       }
+      return { isLiked: !isLiked };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workoutLikes'] });
+    onMutate: async ({ workout_id, isLiked }) => {
+      await queryClient.cancelQueries({ queryKey: ['allLikes'] });
+      
+      const previousAllLikes = queryClient.getQueryData(['allLikes']);
+      
+      queryClient.setQueryData(['allLikes'], (old = []) => {
+        if (isLiked) {
+          return old.filter(like => !(like.workout_id === workout_id && like.created_by === currentUser?.email));
+        } else {
+          return [...old, { workout_id, created_by: currentUser?.email, id: 'temp-' + Date.now() }];
+        }
+      });
+      
+      return { previousAllLikes };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(['allLikes'], context.previousAllLikes);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['allLikes'] });
     }
   });
 
@@ -329,12 +345,13 @@ export default function Home() {
                     onCopy={() => handleCopyWorkout(workout)}
                     onAIInspire={() => handleAIInspire(workout)}
                     onLike={() => {
+                      if (toggleLikeMutation.isPending) return;
                       const likeData = getLikesForWorkout(workout.id, currentUser?.email);
-                      if (likeData.isLiked) {
-                        deleteLikeMutation.mutate({ workout_id: workout.id, user_email: currentUser?.email });
-                      } else {
-                        createLikeMutation.mutate({ workout_id: workout.id });
-                      }
+                      toggleLikeMutation.mutate({ 
+                        workout_id: workout.id, 
+                        user_email: currentUser?.email,
+                        isLiked: likeData.isLiked 
+                      });
                     }}
                     likeData={getLikesForWorkout(workout.id, currentUser?.email)}
                     currentUser={currentUser}

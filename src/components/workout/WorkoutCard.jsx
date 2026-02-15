@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
+import moment from 'moment';
 
 const DEFAULT_IMAGES = {
   strength: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=400&h=200&fit=crop',
@@ -156,6 +157,9 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
             {showCommunityBadge && creatorUsername && (
               <p className="text-xs text-slate-500 mb-3 flex-shrink-0">
                 Created by: <span className="font-medium text-slate-700">{creatorUsername}</span>
+                {workout.created_date && (
+                  <span className="ml-2">• {moment(workout.created_date).fromNow()}</span>
+                )}
               </p>
             )}
             

@@ -117,33 +117,35 @@ Return structured data that can be used to create a workout.`;
         });
       }
 
-      // Transform to app format and add YouTube demo links
-      const exercises = await Promise.all(
-        (extractedData.exercises || []).map(async (ex, idx) => {
-          // Search for exercise demo on YouTube
-          let demoVideo = '';
-          try {
-            const searchQuery = `${ex.name} exercise form tutorial`;
-            const encodedQuery = encodeURIComponent(searchQuery);
-            demoVideo = `https://www.youtube.com/results?search_query=${encodedQuery}`;
-          } catch (error) {
-            console.error('Error generating demo link:', error);
-          }
+      // Fetch YouTube demo links for all exercises in parallel via LLM internet search
+      const fetchVideoUrl = async (exerciseName) => {
+        try {
+          const result = await base44.integrations.Core.InvokeLLM({
+            prompt: `Find a real YouTube video URL demonstrating the exercise "${exerciseName}" with proper form. Return ONLY the full YouTube URL (e.g. https://www.youtube.com/watch?v=XXXXX). No other text.`,
+            add_context_from_internet: true
+          });
+          const match = result && result.match(/https:\/\/www\.youtube\.com\/watch\?v=[\w-]+/);
+          return match ? match[0] : '';
+        } catch {
+          return '';
+        }
+      };
 
-          return {
-            id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
-            name: ex.name,
-            sets: ex.sets || 3,
-            exercise_type: 'reps',
-            reps: ex.reps || '10',
-            rest: ex.rest || 60,
-            rest_after_exercise: ex.rest_after_exercise || 120,
-            weight: ex.weight || 0,
-            notes: ex.notes || '',
-            demo_video: demoVideo
-          };
-        })
-      );
+      const exerciseList = extractedData.exercises || [];
+      const videoUrls = await Promise.all(exerciseList.map(ex => fetchVideoUrl(ex.name)));
+
+      const exercises = exerciseList.map((ex, idx) => ({
+        id: `ex_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+        name: ex.name,
+        sets: ex.sets || 3,
+        exercise_type: 'reps',
+        reps: ex.reps || '10',
+        rest: ex.rest || 60,
+        rest_after_exercise: ex.rest_after_exercise || 120,
+        weight: ex.weight || 0,
+        notes: ex.notes || '',
+        demo_video: videoUrls[idx] || ''
+      }));
 
       const workoutData = {
         name: extractedData.workout_name || 'Imported Workout',

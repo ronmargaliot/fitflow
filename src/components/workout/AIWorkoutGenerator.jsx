@@ -431,25 +431,25 @@ Return the normalized workout with the same structure. Output only JSON.`;
         return;
       }
 
-      // STEP 4: Enrich with videos (best effort, non-blocking)
-      console.log('🎥 Step 4: Adding video demos...');
-      try {
-        for (let i = 0; i < Math.min(3, workoutData.exercises.length); i++) {
-          try {
-            const videoResult = await base44.integrations.Core.InvokeLLM({
-              prompt: `Find YouTube URL for: "${workoutData.exercises[i].name}". Return ONLY the URL.`,
-              add_context_from_internet: true
-            });
-            if (videoResult && videoResult.includes('youtube.com')) {
-              workoutData.exercises[i].demo_video = videoResult.trim().split('\n')[0];
-            }
-          } catch (err) {
-            console.warn(`Video failed for exercise ${i}`);
-          }
+      // STEP 4: Enrich ALL exercises with YouTube videos in parallel
+      console.log('🎥 Step 4: Adding video demos for all exercises...');
+      const fetchVideoUrl = async (exerciseName) => {
+        try {
+          const result = await base44.integrations.Core.InvokeLLM({
+            prompt: `Find a real YouTube video URL demonstrating the exercise "${exerciseName}" with proper form. Return ONLY the full YouTube URL (e.g. https://www.youtube.com/watch?v=XXXXX). No other text.`,
+            add_context_from_internet: true
+          });
+          const match = result && result.match(/https:\/\/www\.youtube\.com\/watch\?v=[\w-]+/);
+          return match ? match[0] : '';
+        } catch {
+          return '';
         }
-      } catch (err) {
-        console.warn('Video enrichment skipped');
-      }
+      };
+
+      const videoUrls = await Promise.all(workoutData.exercises.map(ex => fetchVideoUrl(ex.name)));
+      workoutData.exercises.forEach((ex, i) => {
+        ex.demo_video = videoUrls[i] || '';
+      });
 
       console.log('✅ SUCCESS: Generated workout with', workoutData.exercises.length, 'exercises');
       onGenerate(workoutData);

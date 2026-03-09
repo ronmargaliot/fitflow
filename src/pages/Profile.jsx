@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Save, User } from 'lucide-react';
+import { Loader2, Save, User, Layout } from 'lucide-react';
 import { toast } from "sonner";
 import ImageUpload from '@/components/common/ImageUpload';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -17,7 +18,8 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     username: '',
     bio: '',
-    avatar_url: ''
+    avatar_url: '',
+    default_tab: 'community'
   });
   const queryClient = useQueryClient();
 
@@ -32,7 +34,8 @@ export default function Profile() {
         setFormData({
           username: currentUser.username || defaultUsername,
           bio: currentUser.bio || '',
-          avatar_url: currentUser.avatar_url || currentUser.picture || ''
+          avatar_url: currentUser.avatar_url || currentUser.picture || '',
+          default_tab: currentUser.default_tab || 'community'
         });
       } catch (error) {
         console.error('Error loading user:', error);
@@ -155,6 +158,27 @@ export default function Profile() {
                 <p className="text-xs text-slate-500 mt-1">
                   This will be displayed on your public workouts
                 </p>
+              </div>
+
+              {/* Default Tab */}
+              <div>
+                <Label className="flex items-center gap-2">
+                  <Layout className="w-4 h-4" />
+                  Default Home Tab
+                </Label>
+                <Select
+                  value={formData.default_tab}
+                  onValueChange={(v) => setFormData({ ...formData, default_tab: v })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="my">My Workouts</SelectItem>
+                    <SelectItem value="community">Community</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500 mt-1">Which tab opens first when you visit the home page</p>
               </div>
 
               {/* Bio */}

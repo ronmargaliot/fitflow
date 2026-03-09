@@ -358,6 +358,7 @@ export default function Home() {
                     showCommunityBadge={activeTab === 'community'}
                     onCopy={() => handleCopyWorkout(workout)}
                     onAIInspire={() => handleAIInspire(workout)}
+                    onPin={() => pinMutation.mutate({ id: workout.id, pinned: workout.is_pinned })}
                     onLike={() => {
                       if (toggleLikeMutation.isPending) return;
                       const likeData = getLikesForWorkout(workout.id, currentUser?.email);
@@ -369,6 +370,7 @@ export default function Home() {
                     }}
                     likeData={getLikesForWorkout(workout.id, currentUser?.email)}
                     currentUser={currentUser}
+                    showPin={activeTab === 'my'}
                   />
                 </motion.div>
               ))}

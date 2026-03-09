@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2 } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2, Pin, PinOff } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,7 @@ const DEFAULT_IMAGES = {
   default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
 };
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData, currentUser }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData, currentUser, onPin, showPin }) {
   const [creatorUsername, setCreatorUsername] = useState(null);
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
@@ -63,6 +63,12 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
     onLike?.();
   };
 
+  const handlePin = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onPin?.();
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -70,7 +76,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <Link to={createPageUrl(`WorkoutDetail?id=${workout.id}`)}>
-        <Card className="relative overflow-hidden cursor-pointer group border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-[280px] flex flex-col">
+        <Card className={`relative overflow-hidden cursor-pointer group border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-[280px] flex flex-col ${workout.is_pinned && showPin ? 'ring-2 ring-amber-400' : ''}`}>
           {/* Cover Image */}
           <div className="relative h-32 overflow-hidden">
             <img 
@@ -81,8 +87,22 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             
+            {/* Pin button */}
+            {showPin && isOwner && (
+              <button
+                onClick={handlePin}
+                className="absolute top-2 left-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow transition-colors"
+                title={workout.is_pinned ? 'Unpin workout' : 'Pin to top'}
+              >
+                {workout.is_pinned
+                  ? <Pin className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                  : <Pin className="w-3.5 h-3.5 text-slate-400" />
+                }
+              </button>
+            )}
+
             {/* Badges on image */}
-            <div className="absolute top-2 left-2 flex gap-1.5">
+            <div className={`absolute top-2 flex gap-1.5 ${showPin && isOwner ? 'left-11' : 'left-2'}`}>
               {showCommunityBadge && (
                 <Badge className={`text-xs ${
                   isOwner 

@@ -75,6 +75,12 @@ export default function Home() {
       filtered = filtered.filter(w => w.difficulty === filters.difficulty);
     }
     
+    // Pinned workouts always float to top in "my" tab
+    if (activeTab === 'my') {
+      filtered.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
+      return filtered;
+    }
+
     // Sort
     if (filters.sortBy === 'popular') {
       filtered.sort((a, b) => (b.copy_count || 0) + (b.share_count || 0) - (a.copy_count || 0) - (a.share_count || 0));
@@ -164,6 +170,11 @@ export default function Home() {
     setInspirationWorkout(workout);
     setShowAIInspiration(true);
   };
+
+  const pinMutation = useMutation({
+    mutationFn: ({ id, pinned }) => base44.entities.Workout.update(id, { is_pinned: !pinned }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workouts'] })
+  });
 
   const toggleLikeMutation = useMutation({
     mutationFn: async ({ workout_id, user_email, isLiked }) => {

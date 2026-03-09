@@ -29,6 +29,9 @@ export default function Home() {
     const loadUser = async () => {
       const user = await base44.auth.me();
       setCurrentUser(user);
+      if (user?.default_tab) {
+        setActiveTab(user.default_tab);
+      }
     };
     loadUser();
   }, []);

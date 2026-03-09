@@ -91,7 +91,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
             {showPin && isOwner && (
               <button
                 onClick={handlePin}
-                className="absolute top-2 left-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow transition-colors"
+                className="absolute top-2 left-2 z-[1] w-7 h-7 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow transition-colors"
                 title={workout.is_pinned ? 'Unpin workout' : 'Pin to top'}
               >
                 {workout.is_pinned

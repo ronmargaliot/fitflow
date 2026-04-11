@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2, Pin, PinOff } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2, Pin } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
 import ExportButton from '@/components/workout/ExportButton';
 import { motion } from 'framer-motion';
@@ -46,29 +46,10 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
     fetchCreatorUsername();
   }, [workout.created_by, showCommunityBadge]);
 
-  const handleCopy = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onCopy?.();
-  };
-
-  const handleAIInspire = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onAIInspire?.();
-  };
-
-  const handleLike = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onLike?.();
-  };
-
-  const handlePin = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onPin?.();
-  };
+  const handleCopy = (e) => { e.preventDefault(); e.stopPropagation(); onCopy?.(); };
+  const handleAIInspire = (e) => { e.preventDefault(); e.stopPropagation(); onAIInspire?.(); };
+  const handleLike = (e) => { e.preventDefault(); e.stopPropagation(); onLike?.(); };
+  const handlePin = (e) => { e.preventDefault(); e.stopPropagation(); onPin?.(); };
 
   return (
     <motion.div
@@ -80,14 +61,14 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
         <Card className={`relative overflow-hidden cursor-pointer group border-0 shadow-lg hover:shadow-xl transition-all duration-300 h-[280px] flex flex-col ${workout.is_pinned && showPin ? 'ring-2 ring-amber-400' : ''}`}>
           {/* Cover Image */}
           <div className="relative h-32 overflow-hidden">
-            <img 
-              src={coverImage} 
+            <img
+              src={coverImage}
               alt={workout.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={(e) => { e.target.src = DEFAULT_IMAGES.default; }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            
+
             {/* Pin button */}
             {showPin && isOwner && (
               <button
@@ -105,49 +86,38 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
             {/* Badges on image */}
             <div className={`absolute top-2 flex gap-1.5 ${showPin && isOwner ? 'left-11' : 'left-2'}`}>
               {showCommunityBadge && (
-                <Badge className={`text-xs ${
-                  isOwner 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-purple-500 text-white'
-                }`}>
+                <Badge className={`text-xs ${isOwner ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}`}>
                   {isOwner ? (
-                    <>
-                      <User className="w-3 h-3 mr-1" />
-                      Yours
-                    </>
+                    <><User className="w-3 h-3 mr-1" />Yours</>
                   ) : (
-                    <>
-                      <Users className="w-3 h-3 mr-1" />
-                      Community
-                    </>
+                    <><Users className="w-3 h-3 mr-1" />Community</>
                   )}
                 </Badge>
               )}
               {workout.original_workout_id && (
                 <Badge className="bg-blue-500 text-white text-xs">
-                  <Copy className="w-3 h-3 mr-1" />
-                  Copy
+                  <Copy className="w-3 h-3 mr-1" />Copy
                 </Badge>
               )}
             </div>
 
             {/* Stats badges */}
             <div className="absolute top-2 right-2 flex gap-1">
-              <Badge 
+              <Badge
                 className="bg-white/90 text-red-500 text-xs cursor-pointer hover:bg-white transition-colors"
                 onClick={handleLike}
               >
                 <Heart className={`w-3 h-3 mr-1 ${likeData?.isLiked ? 'fill-current' : ''}`} />
                 {likeData?.likeCount || 0}
               </Badge>
-              <Badge 
+              <Badge
                 className="bg-white/90 text-blue-600 text-xs cursor-pointer hover:bg-white transition-colors"
                 onClick={handleCopy}
               >
                 <Copy className="w-3 h-3 mr-1" />
                 {workout.copy_count || 0}
               </Badge>
-              <Badge 
+              <Badge
                 className="bg-white/90 text-purple-600 text-xs cursor-pointer hover:bg-white transition-colors"
                 onClick={handleAIInspire}
               >
@@ -169,7 +139,7 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
               </h3>
             </div>
           </div>
-          
+
           {/* Content */}
           <div className="p-4 flex-1 flex flex-col">
             {workout.description && (
@@ -186,22 +156,17 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                 )}
               </p>
             )}
-            
+
             <div className="flex items-center gap-2 flex-wrap mb-3 flex-shrink-0">
               {workout.category && (
-                <Badge variant="outline" className="text-xs capitalize">
-                  {workout.category}
-                </Badge>
+                <Badge variant="outline" className="text-xs capitalize">{workout.category}</Badge>
               )}
               {workout.difficulty && (
-                <Badge variant="outline" className="text-xs capitalize">
-                  {workout.difficulty}
-                </Badge>
+                <Badge variant="outline" className="text-xs capitalize">{workout.difficulty}</Badge>
               )}
               {workout.duration_minutes && (
                 <Badge variant="outline" className="text-xs">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {workout.duration_minutes}m
+                  <Clock className="w-3 h-3 mr-1" />{workout.duration_minutes}m
                 </Badge>
               )}
             </div>
@@ -209,21 +174,15 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
             <div className="flex items-center justify-between mt-auto">
               <div className="flex items-center gap-3 text-sm text-slate-500">
                 <span className="flex items-center gap-1">
-                  <Dumbbell className="w-4 h-4" />
-                  {exerciseCount}
+                  <Dumbbell className="w-4 h-4" />{exerciseCount}
                 </span>
                 <span>{totalSets} sets</span>
               </div>
-              
+
               {onCopy && onAIInspire && (
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopy}
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    Copy
+                  <Button size="sm" variant="outline" onClick={handleCopy}>
+                    <Copy className="w-4 h-4 mr-1" />Copy
                   </Button>
                   <Button
                     size="sm"

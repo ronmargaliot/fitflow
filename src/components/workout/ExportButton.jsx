@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, FileJson, FileText } from 'lucide-react';
+import { Download, FileJson, FileText, Clipboard } from 'lucide-react';
 import { toast } from 'sonner';
 
 function flattenExercises(exercises = []) {
@@ -112,11 +112,45 @@ function download(blob, filename) {
 }
 
 export default function ExportButton({ workout, variant = "default" }) {
+  const getJSONData = () => {
+    const data = {
+      name: workout.name,
+      description: workout.description || '',
+      category: workout.category || '',
+      difficulty: workout.difficulty || '',
+      duration_minutes: workout.duration_minutes || '',
+      body_areas: workout.body_areas || [],
+      default_rest_seconds: workout.default_rest || '',
+      location_suggestion: workout.location_suggestion || '',
+      tips: workout.tips || '',
+      exercises: (workout.exercises || []).map(ex => ({
+        name: ex.name,
+        type: ex.exercise_type,
+        sets: ex.sets,
+        reps: ex.reps,
+        duration_seconds: ex.duration_seconds,
+        weight: ex.weight,
+        rest_seconds: ex.rest,
+        rest_after_exercise: ex.rest_after_exercise,
+        notes: ex.notes,
+        ...(ex.exercise_type === 'superset' ? { superset_exercises: ex.superset_exercises } : {})
+      }))
+    };
+    return JSON.stringify(data, null, 2);
+  };
+
   const handleJSON = (e) => {
     e.preventDefault();
     e.stopPropagation();
     exportJSON(workout);
     toast.success('Exported as JSON');
+  };
+
+  const handleCopyJSON = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(getJSONData());
+    toast.success('JSON copied to clipboard!');
   };
 
   const handleCSV = (e) => {
@@ -137,11 +171,15 @@ export default function ExportButton({ workout, variant = "default" }) {
         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
           <DropdownMenuItem onClick={handleJSON}>
             <FileJson className="w-4 h-4 mr-2" />
-            Export as JSON
+            Download JSON
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleCopyJSON}>
+            <Clipboard className="w-4 h-4 mr-2" />
+            Copy JSON
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCSV}>
             <FileText className="w-4 h-4 mr-2" />
-            Export as CSV
+            Download CSV
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -159,11 +197,15 @@ export default function ExportButton({ workout, variant = "default" }) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleJSON}>
           <FileJson className="w-4 h-4 mr-2" />
-          Export as JSON
+          Download JSON
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCopyJSON}>
+          <Clipboard className="w-4 h-4 mr-2" />
+          Copy JSON
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCSV}>
           <FileText className="w-4 h-4 mr-2" />
-          Export as CSV
+          Download CSV
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

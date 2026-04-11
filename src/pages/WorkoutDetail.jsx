@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
 import { Wand2, Copy as CopyIcon } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
+import ExportButton from '@/components/workout/ExportButton';
 
 export default function WorkoutDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -328,6 +329,7 @@ export default function WorkoutDetail() {
                 currentUser={currentUser}
                 onShareComplete={() => queryClient.invalidateQueries({ queryKey: ['workout', workoutId] })}
               />
+              <ExportButton workout={workout} />
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2, Pin, PinOff } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
+import ExportButton from '@/components/workout/ExportButton';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -156,6 +157,9 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
               <div onClick={(e) => e.stopPropagation()}>
                 <ShareButton workout={workout} variant="icon" currentUser={currentUser} />
               </div>
+              <div onClick={(e) => e.stopPropagation()}>
+                <ExportButton workout={workout} variant="icon" />
+              </div>
             </div>
 
             {/* Title on image */}
@@ -231,6 +235,9 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                   </Button>
                   <div onClick={(e) => e.stopPropagation()}>
                     <ShareButton workout={workout} variant="icon" currentUser={currentUser} />
+                  </div>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ExportButton workout={workout} variant="icon" />
                   </div>
                 </div>
               )}

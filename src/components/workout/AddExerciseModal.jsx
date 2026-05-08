@@ -63,12 +63,12 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
   return (
     <>
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl">Add New Exercise</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-1">
           <div>
             <Label htmlFor="name">Exercise Name</Label>
             <Input
@@ -385,7 +385,7 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
             <p className="text-xs text-slate-500 mt-1">Paste URL or search for a video</p>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="pt-2 sticky bottom-0 bg-white">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>

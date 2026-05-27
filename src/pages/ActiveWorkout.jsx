@@ -12,7 +12,7 @@ import {
   Timer, Flag, Play, Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useBlocker } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import {
   AlertDialog,
@@ -65,6 +65,31 @@ export default function ActiveWorkout() {
   
   // Full screen timer modal state
   const [showTimerModal, setShowTimerModal] = useState(false);
+  
+  // Navigation blocker (back button)
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => 
+    currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      setShowLeaveDialog(true);
+      setPendingNavigation(() => blocker.proceed);
+    }
+  }, [blocker.state]);
+
+  // Warn on browser refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const { data: workout, isLoading: workoutLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -967,6 +992,44 @@ export default function ActiveWorkout() {
           setUndoState(null);
         }}
       />
+
+      {/* Leave Workout Warning Dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowLeaveDialog(false);
+          blocker.reset?.();
+          setPendingNavigation(null);
+        }
+      }}>
+        <AlertDialogContent className="bg-slate-800 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Leave workout?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Your workout is still in progress. Your progress is saved and you can resume it later — but are you sure you want to leave now?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600"
+              onClick={() => {
+                setShowLeaveDialog(false);
+                blocker.reset?.();
+                setPendingNavigation(null);
+              }}
+            >
+              Stay
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                setShowLeaveDialog(false);
+                if (pendingNavigation) pendingNavigation();
+              }}
+            >
+              Leave Workout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Finish Workout Dialog */}
       <AlertDialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>

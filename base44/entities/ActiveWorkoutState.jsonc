@@ -1,0 +1,35 @@
+{
+  "name": "ActiveWorkoutState",
+  "type": "object",
+  "properties": {
+    "workout_id": {
+      "type": "string",
+      "description": "ID of the workout being performed"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the workout started"
+    },
+    "current_exercise_index": {
+      "type": "number",
+      "description": "Current exercise index"
+    },
+    "current_set": {
+      "type": "number",
+      "description": "Current set number"
+    },
+    "completed_sets": {
+      "type": "object",
+      "description": "Map of exercise IDs to completed set numbers"
+    },
+    "local_exercises": {
+      "type": "array",
+      "description": "Local copy of exercises with any modifications"
+    }
+  },
+  "required": [
+    "workout_id",
+    "started_at"
+  ]
+}

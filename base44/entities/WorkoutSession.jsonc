@@ -1,0 +1,77 @@
+{
+  "name": "WorkoutSession",
+  "type": "object",
+  "properties": {
+    "workout_id": {
+      "type": "string",
+      "description": "ID of the workout performed"
+    },
+    "workout_name": {
+      "type": "string",
+      "description": "Name of the workout at time of session"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the workout started"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the workout finished"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Total duration in seconds"
+    },
+    "completed_sets": {
+      "type": "number",
+      "description": "Number of sets completed"
+    },
+    "total_sets": {
+      "type": "number",
+      "description": "Total sets in the workout"
+    },
+    "total_volume": {
+      "type": "number",
+      "description": "Total volume lifted (weight x reps x sets)"
+    },
+    "total_reps": {
+      "type": "number",
+      "description": "Total reps performed"
+    },
+    "exercises_completed": {
+      "type": "array",
+      "description": "Details of each exercise performed",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sets_completed": {
+            "type": "number"
+          },
+          "total_sets": {
+            "type": "number"
+          },
+          "reps": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "is_complete": {
+      "type": "boolean",
+      "description": "Whether all sets were completed"
+    }
+  },
+  "required": [
+    "workout_id",
+    "workout_name",
+    "started_at"
+  ]
+}

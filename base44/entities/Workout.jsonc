@@ -1,0 +1,210 @@
+{
+  "name": "Workout",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the workout"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the workout"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "strength",
+        "cardio",
+        "hiit",
+        "yoga",
+        "stretching",
+        "calisthenics",
+        "crossfit",
+        "other"
+      ],
+      "default": "strength",
+      "description": "Workout category"
+    },
+    "body_areas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "chest",
+          "back",
+          "legs",
+          "arms",
+          "shoulders",
+          "core",
+          "full_body"
+        ]
+      },
+      "description": "Body areas targeted"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "default": "intermediate",
+      "description": "Difficulty level"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Estimated duration in minutes"
+    },
+    "default_rest": {
+      "type": "number",
+      "description": "Default rest time in seconds between sets"
+    },
+    "exercises": {
+      "type": "array",
+      "description": "List of exercises in this workout",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "exercise_type": {
+            "type": "string",
+            "enum": [
+              "reps",
+              "time",
+              "superset"
+            ],
+            "default": "reps"
+          },
+          "sets": {
+            "type": "number"
+          },
+          "reps": {
+            "type": "string"
+          },
+          "duration_seconds": {
+            "type": "number"
+          },
+          "rest": {
+            "type": "number",
+            "description": "Rest time in seconds between sets"
+          },
+          "rest_after_exercise": {
+            "type": "number",
+            "description": "Rest time in seconds after completing this exercise"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "demo_image": {
+            "type": "string"
+          },
+          "demo_video": {
+            "type": "string"
+          },
+          "superset_exercises": {
+            "type": "array",
+            "description": "Sub-exercises for superset type",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "exercise_type": {
+                  "type": "string",
+                  "enum": [
+                    "reps",
+                    "time"
+                  ],
+                  "default": "reps"
+                },
+                "reps": {
+                  "type": "string"
+                },
+                "duration_seconds": {
+                  "type": "number"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "demo_image": {
+                  "type": "string"
+                },
+                "demo_video": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "color": {
+      "type": "string",
+      "description": "Theme color for the workout card"
+    },
+    "cover_image": {
+      "type": "string",
+      "description": "Cover image URL for the workout"
+    },
+    "tips": {
+      "type": "string",
+      "description": "Tips and recommendations for the workout"
+    },
+    "location_suggestion": {
+      "type": "string",
+      "description": "Suggested location (gym, home, outdoor, etc.)"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this workout is visible to the community"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this workout is pinned to the top of My Workouts"
+    },
+    "copy_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this workout has been copied"
+    },
+    "ai_inspo_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this workout was used as AI inspiration"
+    },
+    "share_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this workout has been shared"
+    },
+    "original_workout_id": {
+      "type": "string",
+      "description": "ID of the original workout if this is a copy"
+    },
+    "original_creator": {
+      "type": "string",
+      "description": "Email of the original creator if this is a copy"
+    }
+  },
+  "required": [
+    "name",
+    "exercises"
+  ]
+}

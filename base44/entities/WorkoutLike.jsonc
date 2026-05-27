@@ -1,0 +1,13 @@
+{
+  "name": "WorkoutLike",
+  "type": "object",
+  "properties": {
+    "workout_id": {
+      "type": "string",
+      "description": "ID of the liked workout"
+    }
+  },
+  "required": [
+    "workout_id"
+  ]
+}

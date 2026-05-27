@@ -1,0 +1,48 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "copy",
+        "share",
+        "ai_inspire",
+        "comment"
+      ],
+      "description": "Type of notification"
+    },
+    "workout_id": {
+      "type": "string",
+      "description": "ID of the workout"
+    },
+    "workout_name": {
+      "type": "string",
+      "description": "Name of the workout"
+    },
+    "actor_email": {
+      "type": "string",
+      "description": "Email of the person who performed the action"
+    },
+    "actor_username": {
+      "type": "string",
+      "description": "Username of the person who performed the action"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Email of the workout owner"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the notification has been read"
+    }
+  },
+  "required": [
+    "type",
+    "workout_id",
+    "workout_name",
+    "actor_email",
+    "recipient_email"
+  ]
+}

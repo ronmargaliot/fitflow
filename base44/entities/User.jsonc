@@ -1,0 +1,28 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Unique username for the user"
+    },
+    "bio": {
+      "type": "string",
+      "description": "User bio"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "User avatar image URL"
+    },
+    "default_tab": {
+      "type": "string",
+      "enum": [
+        "my",
+        "community"
+      ],
+      "default": "community",
+      "description": "Default tab to show on the home page"
+    }
+  },
+  "required": []
+}

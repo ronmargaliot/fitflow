@@ -1,0 +1,22 @@
+{
+  "name": "WorkoutComment",
+  "type": "object",
+  "properties": {
+    "workout_id": {
+      "type": "string",
+      "description": "ID of the workout being commented on"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment text"
+    },
+    "parent_id": {
+      "type": "string",
+      "description": "ID of parent comment for replies"
+    }
+  },
+  "required": [
+    "workout_id",
+    "content"
+  ]
+}

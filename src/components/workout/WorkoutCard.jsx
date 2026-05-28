@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2, Pin } from 'lucide-react';
+import { Dumbbell, Clock, Users, Copy, User, Heart, Sparkles, Wand2, Share2, Pin, Trophy } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
 import ExportButton from '@/components/workout/ExportButton';
 import { motion } from 'framer-motion';
@@ -22,7 +22,7 @@ const DEFAULT_IMAGES = {
   default: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=200&fit=crop'
 };
 
-export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData, currentUser, onPin, showPin }) {
+export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCopy, onAIInspire, onLike, likeData, currentUser, onPin, showPin, sessionCount }) {
   const [creatorUsername, setCreatorUsername] = useState(null);
   const totalSets = workout.exercises?.reduce((acc, ex) => acc + (ex.sets || 0), 0) || 0;
   const exerciseCount = workout.exercises?.length || 0;
@@ -155,6 +155,15 @@ export default function WorkoutCard({ workout, isOwner, showCommunityBadge, onCo
                   <span className="ml-2">• {moment(workout.created_date).fromNow()}</span>
                 )}
               </p>
+            )}
+
+            {sessionCount !== undefined && (
+              <div className="flex items-center gap-1.5 mb-2 flex-shrink-0">
+                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs font-medium text-amber-600">
+                  {sessionCount} {sessionCount === 1 ? 'session' : 'sessions'} completed
+                </span>
+              </div>
             )}
 
             <div className="flex items-center gap-2 flex-wrap mb-3 flex-shrink-0">

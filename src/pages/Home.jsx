@@ -42,6 +42,16 @@ export default function Home() {
     staleTime: 10000
   });
 
+  const { data: mySessions = [] } = useQuery({
+    queryKey: ['sessions', currentUser?.email],
+    queryFn: () => base44.entities.WorkoutSession.filter({ created_by: currentUser?.email }),
+    enabled: !!currentUser?.email,
+    staleTime: 30000
+  });
+
+  const getSessionCount = (workoutId) => 
+    mySessions.filter(s => s.workout_id === workoutId).length;
+
   const { getLikesForWorkout, allLikes = [] } = useBulkLikes();
 
   // Filter workouts based on tab and filters
@@ -371,6 +381,7 @@ export default function Home() {
                     likeData={getLikesForWorkout(workout.id, currentUser?.email)}
                     currentUser={currentUser}
                     showPin={activeTab === 'my'}
+                    sessionCount={activeTab === 'my' ? getSessionCount(workout.id) : undefined}
                   />
                 </motion.div>
               ))}

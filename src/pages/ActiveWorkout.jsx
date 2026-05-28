@@ -12,7 +12,7 @@ import {
   Timer, Flag, Play, Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate, useBlocker } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import {
   AlertDialog,
@@ -68,18 +68,19 @@ export default function ActiveWorkout() {
   
   // Navigation blocker (back button)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
-
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => 
-    currentLocation.pathname !== nextLocation.pathname
-  );
 
   useEffect(() => {
-    if (blocker.state === 'blocked') {
+    const handlePopState = (e) => {
+      e.preventDefault();
+      // Push state back so user stays on page
+      window.history.pushState(null, '', window.location.href);
       setShowLeaveDialog(true);
-      setPendingNavigation(() => blocker.proceed);
-    }
-  }, [blocker.state]);
+    };
+    // Push an extra history entry so back button triggers popstate
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Warn on browser refresh/close
   useEffect(() => {
@@ -994,13 +995,7 @@ export default function ActiveWorkout() {
       />
 
       {/* Leave Workout Warning Dialog */}
-      <AlertDialog open={showLeaveDialog} onOpenChange={(open) => {
-        if (!open) {
-          setShowLeaveDialog(false);
-          blocker.reset?.();
-          setPendingNavigation(null);
-        }
-      }}>
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <AlertDialogContent className="bg-slate-800 border-slate-700">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Leave workout?</AlertDialogTitle>
@@ -1010,11 +1005,7 @@ export default function ActiveWorkout() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600"
-              onClick={() => {
-                setShowLeaveDialog(false);
-                blocker.reset?.();
-                setPendingNavigation(null);
-              }}
+              onClick={() => setShowLeaveDialog(false)}
             >
               Stay
             </AlertDialogCancel>
@@ -1022,7 +1013,7 @@ export default function ActiveWorkout() {
               className="bg-red-600 hover:bg-red-700"
               onClick={() => {
                 setShowLeaveDialog(false);
-                if (pendingNavigation) pendingNavigation();
+                navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
               }}
             >
               Leave Workout

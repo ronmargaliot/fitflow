@@ -70,16 +70,21 @@ export default function ActiveWorkout() {
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
   useEffect(() => {
-    const handlePopState = (e) => {
-      e.preventDefault();
-      // Push state back so user stays on page
+    // Small delay to avoid interfering with React Router's initial navigation
+    const timer = setTimeout(() => {
+      window.history.pushState(null, '', window.location.href);
+    }, 100);
+
+    const handlePopState = () => {
       window.history.pushState(null, '', window.location.href);
       setShowLeaveDialog(true);
     };
-    // Push an extra history entry so back button triggers popstate
-    window.history.pushState(null, '', window.location.href);
+
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   // Warn on browser refresh/close

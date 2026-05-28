@@ -641,129 +641,179 @@ export default function ActiveWorkout() {
                           <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500 text-white">
                             #{index + 1}
                           </span>
-                          <Input
-                            value={editData.name}
-                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                            className="bg-slate-600 border-slate-500 text-white h-8"
-                            placeholder="Exercise name"
-                          />
-                        </div>
-                        
-                        {/* Exercise Type Toggle - only if no sets completed */}
-                        {getCompletedSetsCount(editData.id) === 0 && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button
-                              type="button"
-                              variant={editData.exercise_type !== 'time' ? 'default' : 'outline'}
-                              size="sm"
-                              className={`flex items-center justify-center gap-2 ${
-                                editData.exercise_type !== 'time'
-                                  ? 'bg-slate-500 text-white hover:bg-slate-400' 
-                                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditData({ ...editData, exercise_type: 'reps' });
-                              }}
-                            >
-                              Rep-based
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={editData.exercise_type === 'time' ? 'default' : 'outline'}
-                              size="sm"
-                              className={`flex items-center justify-center gap-2 ${
-                                editData.exercise_type === 'time'
-                                  ? 'bg-green-600 text-white hover:bg-green-700' 
-                                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditData({ ...editData, exercise_type: 'time' });
-                              }}
-                            >
-                              Time-based
-                            </Button>
-                          </div>
-                        )}
-                        
-                        <div className="grid grid-cols-4 gap-2">
-                          <div>
-                            <label className="text-xs text-slate-400 block mb-1">Sets</label>
+                          {editData.exercise_type !== 'superset' && (
                             <Input
-                              type="number"
-                              value={editData.sets}
-                              onChange={(e) => setEditData({ ...editData, sets: parseInt(e.target.value) || 0 })}
+                              value={editData.name}
+                              onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                               className="bg-slate-600 border-slate-500 text-white h-8"
+                              placeholder="Exercise name"
                             />
-                          </div>
-                          {editData.exercise_type === 'time' ? (
-                            <div>
-                              <label className="text-xs text-slate-400 block mb-1">Duration (s)</label>
-                              <Input
-                                type="number"
-                                value={editData.duration_seconds || 30}
-                                onChange={(e) => setEditData({ ...editData, duration_seconds: parseInt(e.target.value) || 30 })}
-                                className="bg-slate-600 border-slate-500 text-white h-8"
-                              />
-                            </div>
-                          ) : (
-                            <div>
-                              <label className="text-xs text-slate-400 block mb-1">Reps</label>
-                              <Input
-                                value={editData.reps}
-                                onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
-                                className="bg-slate-600 border-slate-500 text-white h-8"
-                              />
-                            </div>
                           )}
-                          <div>
-                            <label className="text-xs text-slate-400 block mb-1">Rest (s)</label>
-                            <Input
-                              type="number"
-                              value={editData.rest || ''}
-                              onChange={(e) => setEditData({ ...editData, rest: parseInt(e.target.value) || 0 })}
-                              className="bg-slate-600 border-slate-500 text-white h-8"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs text-slate-400 block mb-1">Weight</label>
-                            <Input
-                              type="number"
-                              value={editData.weight || ''}
-                              onChange={(e) => setEditData({ ...editData, weight: parseFloat(e.target.value) || 0 })}
-                              className="bg-slate-600 border-slate-500 text-white h-8"
-                            />
-                          </div>
                         </div>
-                        
-                        <div>
-                          <label className="text-xs text-slate-400 block mb-1">Notes</label>
-                          <Input
-                            value={editData.notes || ''}
-                            onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                            className="bg-slate-600 border-slate-500 text-white h-8"
-                            placeholder="Optional notes"
-                          />
-                        </div>
+
+                        {/* Superset editing */}
+                        {editData.exercise_type === 'superset' ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs text-slate-400">Superset Exercises</label>
+                            </div>
+                            {(editData.superset_exercises || []).map((subEx, subIdx) => (
+                              <div key={subEx.id} className="bg-slate-800 border border-slate-600 rounded p-2 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-slate-400">#{subIdx + 1}</span>
+                                  <Input
+                                    value={subEx.name}
+                                    onChange={(e) => {
+                                      const newSubs = [...editData.superset_exercises];
+                                      newSubs[subIdx] = { ...subEx, name: e.target.value };
+                                      setEditData({ ...editData, superset_exercises: newSubs });
+                                    }}
+                                    className="bg-slate-700 border-slate-500 text-white h-7 text-sm flex-1"
+                                    placeholder="Exercise name"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Button
+                                    type="button" size="sm"
+                                    className={`h-7 text-xs ${subEx.exercise_type !== 'time' ? 'bg-slate-500 text-white' : 'bg-slate-700 text-slate-300'}`}
+                                    onClick={(e) => { e.stopPropagation(); const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, exercise_type: 'reps' }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                  >Reps</Button>
+                                  <Button
+                                    type="button" size="sm"
+                                    className={`h-7 text-xs ${subEx.exercise_type === 'time' ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+                                    onClick={(e) => { e.stopPropagation(); const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, exercise_type: 'time' }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                  >Time</Button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {subEx.exercise_type === 'time' ? (
+                                    <div>
+                                      <label className="text-xs text-slate-400">Duration (s)</label>
+                                      <Input type="number" value={subEx.duration_seconds || 30}
+                                        onChange={(e) => { const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, duration_seconds: parseInt(e.target.value) || 30 }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                        className="bg-slate-700 border-slate-500 text-white h-7" />
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <label className="text-xs text-slate-400">Reps</label>
+                                      <Input value={subEx.reps || ''}
+                                        onChange={(e) => { const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, reps: e.target.value }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                        className="bg-slate-700 border-slate-500 text-white h-7" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <label className="text-xs text-slate-400">Weight (kg)</label>
+                                    <Input type="number" value={subEx.weight || ''}
+                                      onChange={(e) => { const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, weight: parseFloat(e.target.value) || 0 }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                      className="bg-slate-700 border-slate-500 text-white h-7" />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs text-slate-400">Notes</label>
+                                  <Input value={subEx.notes || ''} placeholder="Optional notes"
+                                    onChange={(e) => { const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, notes: e.target.value }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                    className="bg-slate-700 border-slate-500 text-white h-7" />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-slate-400">YouTube Video URL</label>
+                                  <Input value={subEx.demo_video || ''} placeholder="https://youtube.com/..."
+                                    onChange={(e) => { const newSubs = [...editData.superset_exercises]; newSubs[subIdx] = { ...subEx, demo_video: e.target.value }; setEditData({ ...editData, superset_exercises: newSubs }); }}
+                                    className="bg-slate-700 border-slate-500 text-white h-7" />
+                                </div>
+                              </div>
+                            ))}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Sets (superset)</label>
+                                <Input type="number" value={editData.sets}
+                                  onChange={(e) => setEditData({ ...editData, sets: parseInt(e.target.value) || 0 })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                              </div>
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Rest (s)</label>
+                                <Input type="number" value={editData.rest || ''}
+                                  onChange={(e) => setEditData({ ...editData, rest: parseInt(e.target.value) || 0 })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Exercise Type Toggle - only if no sets completed */}
+                            {getCompletedSetsCount(editData.id) === 0 && (
+                              <div className="grid grid-cols-2 gap-2">
+                                <Button
+                                  type="button" variant={editData.exercise_type !== 'time' ? 'default' : 'outline'} size="sm"
+                                  className={`flex items-center justify-center gap-2 ${editData.exercise_type !== 'time' ? 'bg-slate-500 text-white hover:bg-slate-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                  onClick={(e) => { e.stopPropagation(); setEditData({ ...editData, exercise_type: 'reps' }); }}
+                                >Rep-based</Button>
+                                <Button
+                                  type="button" variant={editData.exercise_type === 'time' ? 'default' : 'outline'} size="sm"
+                                  className={`flex items-center justify-center gap-2 ${editData.exercise_type === 'time' ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                                  onClick={(e) => { e.stopPropagation(); setEditData({ ...editData, exercise_type: 'time' }); }}
+                                >Time-based</Button>
+                              </div>
+                            )}
+                            
+                            <div className="grid grid-cols-4 gap-2">
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Sets</label>
+                                <Input type="number" value={editData.sets}
+                                  onChange={(e) => setEditData({ ...editData, sets: parseInt(e.target.value) || 0 })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                              </div>
+                              {editData.exercise_type === 'time' ? (
+                                <div>
+                                  <label className="text-xs text-slate-400 block mb-1">Duration (s)</label>
+                                  <Input type="number" value={editData.duration_seconds || 30}
+                                    onChange={(e) => setEditData({ ...editData, duration_seconds: parseInt(e.target.value) || 30 })}
+                                    className="bg-slate-600 border-slate-500 text-white h-8" />
+                                </div>
+                              ) : (
+                                <div>
+                                  <label className="text-xs text-slate-400 block mb-1">Reps</label>
+                                  <Input value={editData.reps}
+                                    onChange={(e) => setEditData({ ...editData, reps: e.target.value })}
+                                    className="bg-slate-600 border-slate-500 text-white h-8" />
+                                </div>
+                              )}
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Rest (s)</label>
+                                <Input type="number" value={editData.rest || ''}
+                                  onChange={(e) => setEditData({ ...editData, rest: parseInt(e.target.value) || 0 })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                              </div>
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Weight</label>
+                                <Input type="number" value={editData.weight || ''}
+                                  onChange={(e) => setEditData({ ...editData, weight: parseFloat(e.target.value) || 0 })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="text-xs text-slate-400 block mb-1">Notes</label>
+                              <Input value={editData.notes || ''}
+                                onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                                className="bg-slate-600 border-slate-500 text-white h-8"
+                                placeholder="Optional notes" />
+                            </div>
+                          </>
+                        )}
                         
                         <div className="flex justify-end gap-2 pt-2">
                           <Button
-                            size="sm"
-                            variant="ghost"
+                            size="sm" variant="ghost"
                             className="text-slate-300 hover:text-white hover:bg-slate-600"
                             onClick={handleCancelEdit}
                           >
-                            <X className="w-4 h-4 mr-1" />
-                            Cancel
+                            <X className="w-4 h-4 mr-1" />Cancel
                           </Button>
                           <Button
                             size="sm"
                             className="bg-blue-500 hover:bg-blue-600 text-white"
                             onClick={handleSaveEdit}
                           >
-                            <Save className="w-4 h-4 mr-1" />
-                            Save
+                            <Save className="w-4 h-4 mr-1" />Save
                           </Button>
                         </div>
                       </div>
@@ -794,13 +844,22 @@ export default function ActiveWorkout() {
                                   {exercise.sets} sets
                                 </Badge>
                                 {(exercise.superset_exercises || []).map((subEx, subIdx) => (
-                                  <Badge key={subIdx} variant="outline" className={`text-xs ${
-                                    isActive && currentSubExerciseIndex === subIdx
-                                      ? 'border-white text-white'
-                                      : 'border-slate-600 text-slate-400'
-                                  }`}>
-                                    {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}
-                                  </Badge>
+                                  <button
+                                    key={subIdx}
+                                    onClick={(e) => { e.stopPropagation(); setDemoExercise(subEx); }}
+                                    className="flex items-center gap-1 group/sub"
+                                  >
+                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${isActive ? 'bg-white/20 group-hover/sub:bg-white/30' : 'bg-slate-600 group-hover/sub:bg-slate-500'}`}>
+                                      <Play className="w-2.5 h-2.5 text-white" />
+                                    </div>
+                                    <Badge variant="outline" className={`text-xs ${
+                                      isActive && currentSubExerciseIndex === subIdx
+                                        ? 'border-white text-white'
+                                        : 'border-slate-600 text-slate-400'
+                                    }`}>
+                                      {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}
+                                    </Badge>
+                                  </button>
                                 ))}
                               </div>
                             ) : (

@@ -17,6 +17,7 @@ import VideoSearchModal from './VideoSearchModal';
 
 export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) {
   const [showVideoSearch, setShowVideoSearch] = useState(false);
+  const [searchingSubIdx, setSearchingSubIdx] = useState(null);
   const [exercise, setExercise] = useState({
     name: '',
     exercise_type: 'reps',
@@ -32,9 +33,18 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
   });
   
   const handleVideoSelect = React.useCallback((url) => {
-    setExercise(prev => ({ ...prev, demo_video: url }));
+    if (searchingSubIdx !== null) {
+      setExercise(prev => {
+        const newSubs = [...(prev.superset_exercises || [])];
+        newSubs[searchingSubIdx] = { ...newSubs[searchingSubIdx], demo_video: url };
+        return { ...prev, superset_exercises: newSubs };
+      });
+      setSearchingSubIdx(null);
+    } else {
+      setExercise(prev => ({ ...prev, demo_video: url }));
+    }
     setShowVideoSearch(false);
-  }, []);
+  }, [searchingSubIdx]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -246,6 +256,47 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
                       />
                     </div>
                   </div>
+                  <div>
+                    <Label className="text-xs">Notes</Label>
+                    <Input
+                      value={subEx.notes || ''}
+                      placeholder="Optional notes"
+                      onChange={(e) => {
+                        const newSubs = [...exercise.superset_exercises];
+                        newSubs[idx] = { ...subEx, notes: e.target.value };
+                        setExercise({ ...exercise, superset_exercises: newSubs });
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">YouTube Video URL</Label>
+                    <div className="flex gap-1">
+                      <Input
+                        value={subEx.demo_video || ''}
+                        placeholder="https://youtube.com/..."
+                        onChange={(e) => {
+                          const newSubs = [...exercise.superset_exercises];
+                          newSubs[idx] = { ...subEx, demo_video: e.target.value };
+                          setExercise({ ...exercise, superset_exercises: newSubs });
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="px-2 flex-shrink-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSearchingSubIdx(idx);
+                          setShowVideoSearch(true);
+                        }}
+                        disabled={!subEx.name}
+                      >
+                        <Search className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ))}
               
@@ -401,9 +452,13 @@ export default function AddExerciseModal({ open, onClose, onAdd, defaultRest }) 
     {showVideoSearch && (
       <VideoSearchModal
         open={true}
-        onClose={() => setShowVideoSearch(false)}
+        onClose={() => { setShowVideoSearch(false); setSearchingSubIdx(null); }}
         onSelect={handleVideoSelect}
-        exerciseName={exercise.name}
+        exerciseName={
+          searchingSubIdx !== null
+            ? (exercise.superset_exercises?.[searchingSubIdx]?.name || exercise.name)
+            : exercise.name
+        }
       />
     )}
     </>

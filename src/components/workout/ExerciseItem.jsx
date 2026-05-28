@@ -29,12 +29,19 @@ export default function ExerciseItem({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(exercise);
-  const [showDemo, setShowDemo] = useState(false);
+  const [showDemo, setShowDemo] = useState(null); // holds the exercise object to demo
   const [showVideoSearch, setShowVideoSearch] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const handleVideoSelect = React.useCallback((url) => {
-    setEditData(prev => ({ ...prev, demo_video: url }));
+    setEditData(prev => {
+      if (prev._searchingSubIdx !== undefined) {
+        const newSubs = [...(prev.superset_exercises || [])];
+        newSubs[prev._searchingSubIdx] = { ...newSubs[prev._searchingSubIdx], demo_video: url };
+        return { ...prev, superset_exercises: newSubs, _searchingSubIdx: undefined };
+      }
+      return { ...prev, demo_video: url };
+    });
     setShowVideoSearch(false);
   }, []);
 
@@ -240,6 +247,46 @@ export default function ExerciseItem({
                       />
                     </div>
                   </div>
+                  <div>
+                    <label className="text-xs text-slate-500">Notes</label>
+                    <Input
+                      className="h-8"
+                      value={subEx.notes || ''}
+                      placeholder="Optional notes"
+                      onChange={(e) => {
+                        const newSubs = [...(editData.superset_exercises || [])];
+                        newSubs[idx] = { ...subEx, notes: e.target.value };
+                        setEditData({ ...editData, superset_exercises: newSubs });
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500">YouTube Video URL</label>
+                    <div className="flex gap-1">
+                      <Input
+                        className="h-8"
+                        value={subEx.demo_video || ''}
+                        placeholder="https://youtube.com/..."
+                        onChange={(e) => {
+                          const newSubs = [...(editData.superset_exercises || [])];
+                          newSubs[idx] = { ...subEx, demo_video: e.target.value };
+                          setEditData({ ...editData, superset_exercises: newSubs });
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 flex-shrink-0"
+                        onClick={() => {
+                          setEditData(prev => ({ ...prev, _searchingSubIdx: idx }));
+                          setShowVideoSearch(true);
+                        }}
+                      >
+                        <Search className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ))}
               
@@ -421,19 +468,28 @@ export default function ExerciseItem({
                     </Badge>
                     <div className="flex flex-wrap gap-1">
                       {(exercise.superset_exercises || []).map((subEx, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs border-purple-300 text-purple-700">
-                          {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}
-                        </Badge>
+                        <button
+                          key={idx}
+                          onClick={(e) => { e.stopPropagation(); setShowDemo(subEx); }}
+                          className="flex items-center gap-1 group/sub"
+                        >
+                          <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center group-hover/sub:bg-purple-200 transition-colors flex-shrink-0">
+                            <Play className="w-2.5 h-2.5 text-purple-600" />
+                          </div>
+                          <Badge variant="outline" className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50">
+                            {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}
+                          </Badge>
+                        </button>
                       ))}
                     </div>
                   </>
                 ) : (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDemo(true);
-                    }}
-                    className="flex items-center gap-1 group/demo"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDemo(exercise);
+                  }}
+                  className="flex items-center gap-1 group/demo"
                   >
                     <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center group-hover/demo:bg-indigo-100 transition-colors">
                       <Play className="w-3 h-3 text-slate-500 group-hover/demo:text-indigo-600" />
@@ -492,9 +548,9 @@ export default function ExerciseItem({
       </Card>
       
       <ExerciseDemoModal
-        open={showDemo}
-        onClose={() => setShowDemo(false)}
-        exercise={exercise}
+        open={!!showDemo}
+        onClose={() => setShowDemo(null)}
+        exercise={showDemo || exercise}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -521,9 +577,13 @@ export default function ExerciseItem({
       {showVideoSearch && (
       <VideoSearchModal
         open={true}
-        onClose={() => setShowVideoSearch(false)}
+        onClose={() => { setShowVideoSearch(false); setEditData(prev => ({ ...prev, _searchingSubIdx: undefined })); }}
         onSelect={handleVideoSelect}
-        exerciseName={editData.name}
+        exerciseName={
+          editData._searchingSubIdx !== undefined
+            ? (editData.superset_exercises?.[editData._searchingSubIdx]?.name || editData.name)
+            : editData.name
+        }
       />
       )}
       </>

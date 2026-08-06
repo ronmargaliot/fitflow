@@ -30,7 +30,10 @@
     },
     "local_exercises": {
       "type": "array",
-      "description": "Local copy of exercises with any modifications"
+      "description": "Local copy of exercises with any modifications",
+      "items": {
+        "type": "object"
+      }
     },
     "is_resting": {
       "type": "boolean",

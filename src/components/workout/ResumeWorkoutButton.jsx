@@ -11,14 +11,14 @@ export default function ResumeWorkoutButton({ currentUser }) {
   const queryClient = useQueryClient();
 
   const { data: activeState } = useQuery({
-    queryKey: ['activeState-all', currentUser?.email],
+    queryKey: ['activeState-all', currentUser?.id],
     queryFn: async () => {
       const states = await base44.entities.ActiveWorkoutState.filter({
-        created_by: currentUser?.email
+        created_by_id: currentUser?.id
       });
       return states[0] || null;
     },
-    enabled: !!currentUser?.email,
+    enabled: !!currentUser?.id,
     refetchInterval: 15000
   });
 

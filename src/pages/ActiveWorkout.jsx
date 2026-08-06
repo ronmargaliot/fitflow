@@ -138,7 +138,7 @@ export default function ActiveWorkout() {
       const user = await base44.auth.me();
       const states = await base44.entities.ActiveWorkoutState.filter({ 
         workout_id: workoutId,
-        created_by: user.email 
+        created_by_id: user.id 
       });
       return states[0] || null;
     },

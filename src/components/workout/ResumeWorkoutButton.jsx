@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { Dumbbell, X } from 'lucide-react';
 
 export default function ResumeWorkoutButton({ currentUser }) {
   const queryClient = useQueryClient();
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const { data: activeState } = useQuery({
     queryKey: ['activeState-all', currentUser?.id],
@@ -23,9 +24,14 @@ export default function ResumeWorkoutButton({ currentUser }) {
   const handleCancelWorkout = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!activeState) return;
-    await base44.entities.ActiveWorkoutState.delete(activeState.id);
-    queryClient.invalidateQueries({ queryKey: ['activeState-all'] });
+    if (!activeState || isCancelling) return;
+    setIsCancelling(true);
+    try {
+      await base44.entities.ActiveWorkoutState.delete(activeState.id);
+      queryClient.invalidateQueries({ queryKey: ['activeState-all'] });
+    } catch {
+      setIsCancelling(false);
+    }
   };
 
   if (!activeState) return null;
@@ -49,10 +55,15 @@ export default function ResumeWorkoutButton({ currentUser }) {
         </Link>
         <button
           type="button"
-          className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0"
+          disabled={isCancelling}
+          className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0 disabled:opacity-50"
           onClick={handleCancelWorkout}
         >
-          <X className="w-5 h-5" />
+          {isCancelling ? (
+            <div className="w-5 h-5 border-2 border-slate-500 border-t-white rounded-full animate-spin" />
+          ) : (
+            <X className="w-5 h-5" />
+          )}
         </button>
       </div>
     </div>

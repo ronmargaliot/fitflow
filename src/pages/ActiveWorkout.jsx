@@ -115,7 +115,11 @@ export default function ActiveWorkout() {
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+    };
   }, [activeStateId, isRestoringState]);
 
   const { data: workout, isLoading: workoutLoading } = useQuery({

@@ -35,28 +35,31 @@ export default function ResumeWorkoutButton({ currentUser }) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed top-2 inset-x-2 z-50 flex justify-center"
+          className="fixed top-3 inset-x-3 z-50 flex justify-center"
         >
-          <div className="flex items-center gap-1 bg-slate-900 text-white rounded-full shadow-2xl border border-slate-700 pl-3 pr-1 py-1 max-w-full">
-            <Dumbbell className="w-4 h-4 text-green-400 flex-shrink-0" />
-            <span className="text-sm font-medium whitespace-nowrap hidden sm:inline pr-1">
-              Workout in progress
-            </span>
+          <div className="flex items-center gap-2 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 pl-4 pr-2 py-2 max-w-full">
+            <Link
+              to={createPageUrl(`ActiveWorkout?id=${activeState.workout_id}`)}
+              className="flex items-center gap-2 flex-shrink-0"
+            >
+              <Dumbbell className="w-6 h-6 text-green-400 flex-shrink-0" />
+              <span className="text-base font-semibold whitespace-nowrap pr-2">
+                Workout in progress
+              </span>
+            </Link>
             <Link to={createPageUrl(`ActiveWorkout?id=${activeState.workout_id}`)} className="flex-shrink-0">
               <Button
-                size="sm"
-                className="h-9 rounded-full bg-green-600 hover:bg-green-700 px-5 text-sm"
+                className="h-11 rounded-xl bg-green-600 hover:bg-green-700 px-6 text-base font-semibold"
               >
                 Resume
               </Button>
             </Link>
             <Button
-              size="sm"
               variant="ghost"
-              className="h-9 w-9 rounded-full p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0"
+              className="h-11 w-11 rounded-xl p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0"
               onClick={handleCancelWorkout}
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </Button>
           </div>
         </motion.div>

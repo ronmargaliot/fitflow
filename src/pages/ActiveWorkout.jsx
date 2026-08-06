@@ -1116,23 +1116,33 @@ export default function ActiveWorkout() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Leave workout?</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
-              Your workout is still in progress. Your progress is saved and you can resume it later — but are you sure you want to leave now?
+              Your workout is still in progress. What would you like to do?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600"
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600 sm:mr-auto"
               onClick={() => setShowLeaveDialog(false)}
             >
               Stay
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-slate-600 hover:bg-slate-500"
               onClick={() => {
                 setShowLeaveDialog(false);
                 navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
               }}
             >
-              Leave Workout
+              Save & Leave
+            </AlertDialogAction>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={async () => {
+                setShowLeaveDialog(false);
+                await deleteStateMutation.mutateAsync();
+                navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
+              }}
+            >
+              Cancel Workout
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

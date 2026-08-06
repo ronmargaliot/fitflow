@@ -35,17 +35,17 @@ export default function ResumeWorkoutButton({ currentUser }) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+          className="fixed top-2 inset-x-2 z-50 flex justify-center"
         >
-          <div className="flex items-center gap-2 bg-slate-900 text-white rounded-full shadow-2xl border border-slate-700 pl-4 pr-1.5 py-1.5">
+          <div className="flex items-center gap-1.5 bg-slate-900 text-white rounded-full shadow-2xl border border-slate-700 pl-3 pr-1 py-1 max-w-full">
             <Dumbbell className="w-4 h-4 text-green-400 flex-shrink-0" />
-            <span className="text-sm font-medium whitespace-nowrap">
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap hidden sm:inline">
               Workout in progress
             </span>
             <Link to={createPageUrl(`ActiveWorkout?id=${activeState.workout_id}`)}>
               <Button
                 size="sm"
-                className="h-7 rounded-full bg-green-600 hover:bg-green-700 px-3 text-xs"
+                className="h-7 rounded-full bg-green-600 hover:bg-green-700 px-3 text-xs flex-shrink-0"
               >
                 Resume
               </Button>
@@ -53,7 +53,7 @@ export default function ResumeWorkoutButton({ currentUser }) {
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 w-7 rounded-full p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800"
+              className="h-7 w-7 rounded-full p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0"
               onClick={handleCancelWorkout}
             >
               <X className="w-4 h-4" />

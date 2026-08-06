@@ -19,6 +19,11 @@
       "type": "number",
       "description": "Current set number"
     },
+    "current_sub_exercise_index": {
+      "type": "number",
+      "description": "Current sub-exercise index within a superset",
+      "default": 0
+    },
     "completed_sets": {
       "type": "object",
       "description": "Map of exercise IDs to completed set numbers"
@@ -26,6 +31,25 @@
     "local_exercises": {
       "type": "array",
       "description": "Local copy of exercises with any modifications"
+    },
+    "is_resting": {
+      "type": "boolean",
+      "description": "Whether the user is currently in a rest period",
+      "default": false
+    },
+    "rest_ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the current rest period ends"
+    },
+    "max_rest_time": {
+      "type": "number",
+      "description": "Total rest time for the current rest period (for progress ring)"
+    },
+    "is_exercise_rest": {
+      "type": "boolean",
+      "description": "Whether this is a rest between exercises (vs between sets)",
+      "default": false
     }
   },
   "required": [

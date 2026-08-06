@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export default function ActiveWorkout() {
   const [restTime, setRestTime] = useState(0);
   const [maxRestTime, setMaxRestTime] = useState(0);
   const [isExerciseRest, setIsExerciseRest] = useState(false);
+  const [restEndsAt, setRestEndsAt] = useState(null);
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [editData, setEditData] = useState(null);
   const [localExercises, setLocalExercises] = useState([]);
@@ -87,15 +88,33 @@ export default function ActiveWorkout() {
     };
   }, []);
 
-  // Warn on browser refresh/close
+  // Ref to track latest state for beforeunload flush
+  const stateRef = useRef({});
+  stateRef.current = {
+    started_at: startTime.toISOString(),
+    current_exercise_index: currentExerciseIndex,
+    current_set: currentSet,
+    current_sub_exercise_index: currentSubExerciseIndex,
+    completed_sets: completedSets,
+    local_exercises: localExercises,
+    is_resting: isResting,
+    rest_ends_at: restEndsAt ? restEndsAt.toISOString() : null,
+    max_rest_time: maxRestTime,
+    is_exercise_rest: isExerciseRest
+  };
+
+  // Save state on browser refresh/close + warn user
   useEffect(() => {
     const handleBeforeUnload = (e) => {
+      if (activeStateId && !isRestoringState) {
+        saveStateMutation.mutate(stateRef.current);
+      }
       e.preventDefault();
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
+  }, [activeStateId, isRestoringState]);
 
   const { data: workout, isLoading: workoutLoading } = useQuery({
     queryKey: ['workout', workoutId],
@@ -129,9 +148,23 @@ export default function ActiveWorkout() {
       setStartTime(new Date(existingState.started_at));
       setCurrentExerciseIndex(existingState.current_exercise_index || 0);
       setCurrentSet(existingState.current_set || 1);
+      setCurrentSubExerciseIndex(existingState.current_sub_exercise_index || 0);
       setCompletedSets(existingState.completed_sets || {});
       setLocalExercises(existingState.local_exercises || workout?.exercises || []);
       setActiveStateId(existingState.id);
+
+      // Restore rest timer state
+      if (existingState.is_resting && existingState.rest_ends_at) {
+        const endsAt = new Date(existingState.rest_ends_at);
+        const remaining = Math.max(0, Math.ceil((endsAt - new Date()) / 1000));
+        if (remaining > 0) {
+          setIsResting(true);
+          setRestEndsAt(endsAt);
+          setRestTime(remaining);
+          setMaxRestTime(existingState.max_rest_time || remaining);
+          setIsExerciseRest(existingState.is_exercise_rest || false);
+        }
+      }
     } else if (workout?.exercises) {
       setLocalExercises(workout.exercises);
     }
@@ -179,15 +212,20 @@ export default function ActiveWorkout() {
         started_at: startTime.toISOString(),
         current_exercise_index: currentExerciseIndex,
         current_set: currentSet,
+        current_sub_exercise_index: currentSubExerciseIndex,
         completed_sets: completedSets,
-        local_exercises: localExercises
+        local_exercises: localExercises,
+        is_resting: isResting,
+        rest_ends_at: restEndsAt ? restEndsAt.toISOString() : null,
+        max_rest_time: maxRestTime,
+        is_exercise_rest: isExerciseRest
       });
     };
 
     // Debounce saves
-    const timeout = setTimeout(saveState, 1000);
+    const timeout = setTimeout(saveState, 500);
     return () => clearTimeout(timeout);
-  }, [currentExerciseIndex, currentSet, completedSets, localExercises, isRestoringState]);
+  }, [currentExerciseIndex, currentSet, currentSubExerciseIndex, completedSets, localExercises, isResting, restEndsAt, maxRestTime, isExerciseRest, isRestoringState]);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Workout.update(workoutId, data),
@@ -212,19 +250,20 @@ export default function ActiveWorkout() {
   const completedTotal = Object.values(completedSets).reduce((acc, sets) => acc + sets.length, 0);
   const progress = totalSets > 0 ? (completedTotal / totalSets) * 100 : 0;
 
-  // Rest timer
+  // Rest timer - based on end timestamp for persistence across refreshes
   useEffect(() => {
-    let interval;
-    if (isResting && restTime > 0) {
-      interval = setInterval(() => {
-        setRestTime((prev) => prev - 1);
-      }, 1000);
-    } else if (restTime === 0 && isResting) {
-      setIsResting(false);
-      setIsExerciseRest(false);
-    }
+    if (!isResting || !restEndsAt) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((restEndsAt - new Date()) / 1000));
+      setRestTime(remaining);
+      if (remaining === 0) {
+        setIsResting(false);
+        setIsExerciseRest(false);
+        setRestEndsAt(null);
+      }
+    }, 1000);
     return () => clearInterval(interval);
-  }, [isResting, restTime]);
+  }, [isResting, restEndsAt]);
 
   const formatElapsedTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -372,8 +411,10 @@ export default function ActiveWorkout() {
 
     if (currentSet < currentExercise.sets) {
       const rest = currentExercise.rest || workout?.default_rest || 90;
+      const endsAt = new Date(Date.now() + rest * 1000);
       setMaxRestTime(rest);
       setRestTime(rest);
+      setRestEndsAt(endsAt);
       setIsResting(true);
       setIsExerciseRest(false);
       setCurrentSet(currentSet + 1);
@@ -383,8 +424,10 @@ export default function ActiveWorkout() {
         setCurrentSet(1);
         setCurrentSubExerciseIndex(0);
         const rest = currentExercise.rest_after_exercise || 120;
+        const endsAt = new Date(Date.now() + rest * 1000);
         setMaxRestTime(rest);
         setRestTime(rest);
+        setRestEndsAt(endsAt);
         setIsResting(true);
         setIsExerciseRest(true);
       } else {
@@ -402,6 +445,8 @@ export default function ActiveWorkout() {
     setCurrentSubExerciseIndex(undoState.currentSubExerciseIndex || 0);
     setIsResting(false);
     setRestTime(0);
+    setRestEndsAt(null);
+    setIsExerciseRest(false);
     setShowUndo(false);
     setUndoState(null);
   }, [undoState]);
@@ -414,6 +459,7 @@ export default function ActiveWorkout() {
   const handleSkipRest = () => {
     setIsResting(false);
     setRestTime(0);
+    setRestEndsAt(null);
     setIsExerciseRest(false);
   };
 

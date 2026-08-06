@@ -6,6 +6,7 @@ import { Home, TrendingUp, User, Dumbbell, Bell } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
+import ResumeWorkoutButton from '@/components/workout/ResumeWorkoutButton';
 
 
 export default function Layout({ children, currentPageName }) {
@@ -58,6 +59,9 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-slate-50">
       {children}
+
+      {/* Floating Resume Workout Button */}
+      <ResumeWorkoutButton currentUser={user} />
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50">

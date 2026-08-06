@@ -37,29 +37,29 @@ export default function ResumeWorkoutButton({ currentUser }) {
           exit={{ opacity: 0, y: -20 }}
           className="fixed top-3 inset-x-3 z-50 flex justify-center"
         >
-          <div className="flex items-center gap-2 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 pl-4 pr-2 py-2 max-w-full">
+          <div className="flex items-center gap-1 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 pl-3 pr-1 py-1 w-full max-w-sm">
             <Link
               to={createPageUrl(`ActiveWorkout?id=${activeState.workout_id}`)}
-              className="flex items-center gap-2 flex-shrink-0"
+              className="flex items-center gap-1.5 flex-shrink min-w-0"
             >
-              <Dumbbell className="w-6 h-6 text-green-400 flex-shrink-0" />
-              <span className="text-base font-semibold whitespace-nowrap pr-2">
+              <Dumbbell className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <span className="text-sm font-semibold truncate">
                 Workout in progress
               </span>
             </Link>
             <Link to={createPageUrl(`ActiveWorkout?id=${activeState.workout_id}`)} className="flex-shrink-0">
               <Button
-                className="h-11 rounded-xl bg-green-600 hover:bg-green-700 px-6 text-base font-semibold"
+                className="h-10 rounded-xl bg-green-600 hover:bg-green-700 px-4 text-sm font-semibold"
               >
                 Resume
               </Button>
             </Link>
             <Button
               variant="ghost"
-              className="h-11 w-11 rounded-xl p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0"
+              className="h-10 w-10 rounded-xl p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800 flex-shrink-0"
               onClick={handleCancelWorkout}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </Button>
           </div>
         </motion.div>

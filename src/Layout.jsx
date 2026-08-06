@@ -58,10 +58,10 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {children}
-
-      {/* Floating Resume Workout Button */}
+      {/* Resume Workout Banner */}
       <ResumeWorkoutButton currentUser={user} />
+
+      {children}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50">

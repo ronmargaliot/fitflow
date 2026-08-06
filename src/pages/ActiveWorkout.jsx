@@ -53,6 +53,8 @@ export default function ActiveWorkout() {
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [isRestoringState, setIsRestoringState] = useState(true);
   const [activeStateId, setActiveStateId] = useState(null);
+  const activeStateIdRef = useRef(null);
+  activeStateIdRef.current = activeStateId;
   
   // Undo state
   const [undoState, setUndoState] = useState(null);
@@ -106,8 +108,8 @@ export default function ActiveWorkout() {
   // Save state on browser refresh/close + warn user
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (activeStateId && !isRestoringState) {
-        saveStateMutation.mutate(stateRef.current);
+      if (!isRestoringState && workoutId) {
+        saveWorkoutState(stateRef.current);
       }
       e.preventDefault();
       e.returnValue = '';
@@ -180,20 +182,20 @@ export default function ActiveWorkout() {
     return () => clearInterval(interval);
   }, [startTime, isRestoringState]);
 
-  const saveStateMutation = useMutation({
-    mutationFn: async (stateData) => {
-      if (activeStateId) {
-        return base44.entities.ActiveWorkoutState.update(activeStateId, stateData);
-      } else {
-        const created = await base44.entities.ActiveWorkoutState.create({
-          workout_id: workoutId,
-          ...stateData
-        });
-        setActiveStateId(created.id);
-        return created;
-      }
+  const saveWorkoutState = useCallback(async (stateData) => {
+    const id = activeStateIdRef.current;
+    if (id) {
+      return base44.entities.ActiveWorkoutState.update(id, stateData);
+    } else {
+      const created = await base44.entities.ActiveWorkoutState.create({
+        workout_id: workoutId,
+        ...stateData
+      });
+      setActiveStateId(created.id);
+      activeStateIdRef.current = created.id;
+      return created;
     }
-  });
+  }, [workoutId]);
 
   const deleteStateMutation = useMutation({
     mutationFn: async () => {
@@ -208,7 +210,7 @@ export default function ActiveWorkout() {
     if (isRestoringState || !workoutId) return;
     
     const saveState = () => {
-      saveStateMutation.mutate({
+      saveWorkoutState({
         started_at: startTime.toISOString(),
         current_exercise_index: currentExerciseIndex,
         current_set: currentSet,

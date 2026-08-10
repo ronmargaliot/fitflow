@@ -396,7 +396,9 @@ export default function ActiveWorkout() {
       
       // If not the last sub-exercise in the superset, move to next sub-exercise
       if (currentSubExerciseIndex < totalSubExercises - 1) {
-        setCurrentSubExerciseIndex(currentSubExerciseIndex + 1);
+        const newSubIndex = currentSubExerciseIndex + 1;
+        setCurrentSubExerciseIndex(newSubIndex);
+        saveWorkoutState({ ...stateRef.current, current_sub_exercise_index: newSubIndex });
         return;
       }
       
@@ -427,9 +429,22 @@ export default function ActiveWorkout() {
     newCompletedSets[exerciseId] = [...newCompletedSets[exerciseId], currentSet];
     setCompletedSets(newCompletedSets);
 
+    // Compute new progression state for immediate save
+    let newIndex = currentExerciseIndex;
+    let newSet = currentSet;
+    let newSubIndex = 0;
+    let newIsResting = false;
+    let newRestEndsAt = null;
+    let newMaxRestTime = 0;
+    let newIsExerciseRest = false;
+
     if (currentSet < currentExercise.sets) {
       const rest = currentExercise.rest || workout?.default_rest || 90;
       const endsAt = new Date(Date.now() + rest * 1000);
+      newSet = currentSet + 1;
+      newIsResting = true;
+      newRestEndsAt = endsAt.toISOString();
+      newMaxRestTime = rest;
       setMaxRestTime(rest);
       setRestTime(rest);
       setRestEndsAt(endsAt);
@@ -438,21 +453,41 @@ export default function ActiveWorkout() {
       setCurrentSet(currentSet + 1);
     } else {
       if (currentExerciseIndex < exercises.length - 1) {
-        setCurrentExerciseIndex(currentExerciseIndex + 1);
-        setCurrentSet(1);
-        setCurrentSubExerciseIndex(0);
         const rest = currentExercise.rest_after_exercise || 120;
         const endsAt = new Date(Date.now() + rest * 1000);
+        newIndex = currentExerciseIndex + 1;
+        newSet = 1;
+        newIsResting = true;
+        newRestEndsAt = endsAt.toISOString();
+        newMaxRestTime = rest;
+        newIsExerciseRest = true;
         setMaxRestTime(rest);
         setRestTime(rest);
         setRestEndsAt(endsAt);
         setIsResting(true);
         setIsExerciseRest(true);
+        setCurrentExerciseIndex(currentExerciseIndex + 1);
+        setCurrentSet(1);
+        setCurrentSubExerciseIndex(0);
       } else {
         setShowFinishDialog(true);
       }
     }
-  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, currentSubExerciseIndex, exercises, workout]);
+
+    // Save immediately — the debounced save may not fire before the app closes
+    saveWorkoutState({
+      started_at: startTime.toISOString(),
+      current_exercise_index: newIndex,
+      current_set: newSet,
+      current_sub_exercise_index: newSubIndex,
+      completed_sets: newCompletedSets,
+      local_exercises: localExercises,
+      is_resting: newIsResting,
+      rest_ends_at: newRestEndsAt,
+      max_rest_time: newMaxRestTime,
+      is_exercise_rest: newIsExerciseRest
+    });
+  }, [currentExercise, currentSet, completedSets, currentExerciseIndex, currentSubExerciseIndex, exercises, workout, startTime, localExercises, saveWorkoutState]);
 
   const handleUndo = useCallback(() => {
     if (!undoState) return;

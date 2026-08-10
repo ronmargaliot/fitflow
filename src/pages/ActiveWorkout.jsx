@@ -145,9 +145,11 @@ export default function ActiveWorkout() {
     enabled: !!workoutId
   });
 
-  // Restore state or initialize
+  // Restore state or initialize — only once on initial load
+  const hasRestoredRef = useRef(false);
   useEffect(() => {
     if (stateLoading || workoutLoading) return;
+    if (hasRestoredRef.current) return;
     
     if (existingState) {
       // Restore from saved state
@@ -174,6 +176,7 @@ export default function ActiveWorkout() {
     } else if (workout?.exercises) {
       setLocalExercises(workout.exercises);
     }
+    hasRestoredRef.current = true;
     setIsRestoringState(false);
   }, [existingState, workout, stateLoading, workoutLoading]);
 

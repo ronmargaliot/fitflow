@@ -475,6 +475,9 @@ export default function ActiveWorkout() {
 
   const handleExerciseClick = (index) => {
     if (editingExerciseId) return;
+    // Dismiss the undo toast without reverting any sets — only an explicit Undo tap should undo
+    setShowUndo(false);
+    setUndoState(null);
     setCurrentExerciseIndex(index);
     setCurrentSubExerciseIndex(0);
     const completedCount = completedSets[exercises[index]?.id]?.length || 0;

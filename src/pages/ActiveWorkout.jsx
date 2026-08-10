@@ -380,6 +380,7 @@ export default function ActiveWorkout() {
     // Clear the active state
     await deleteStateMutation.mutateAsync();
     queryClient.invalidateQueries({ queryKey: ['activeState'] });
+    queryClient.invalidateQueries({ queryKey: ['activeState-all'] });
 
     navigate(createPageUrl(`WorkoutDetail?id=${workoutId}`));
   };

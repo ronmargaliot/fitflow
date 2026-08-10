@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import UndoToast from '@/components/workout/UndoToast';
 import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
 import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal';
@@ -240,6 +241,10 @@ export default function ActiveWorkout() {
     mutationFn: (data) => base44.entities.Workout.update(workoutId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workout', workoutId] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+    },
+    onError: (error) => {
+      toast.error('Failed to save exercise changes: ' + (error?.message || 'Unknown error'));
     }
   });
 
@@ -501,6 +506,11 @@ export default function ActiveWorkout() {
     );
     setLocalExercises(newExercises);
     updateMutation.mutate({ exercises: newExercises });
+    // Immediately persist to active state so edits survive refreshes
+    saveWorkoutState({
+      ...stateRef.current,
+      local_exercises: newExercises
+    });
     setEditingExerciseId(null);
     setEditData(null);
   };

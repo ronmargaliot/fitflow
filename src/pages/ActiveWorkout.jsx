@@ -396,9 +396,13 @@ export default function ActiveWorkout() {
       setCurrentSubExerciseIndex(0);
     }
     
-    // Save state for undo
+    // Save state for undo — deep copy arrays so push() below doesn't mutate the snapshot
+    const undoCompletedSets = {};
+    Object.keys(completedSets).forEach(k => {
+      undoCompletedSets[k] = [...completedSets[k]];
+    });
     setUndoState({
-      completedSets: { ...completedSets },
+      completedSets: undoCompletedSets,
       currentSet,
       currentExerciseIndex,
       currentSubExerciseIndex,
@@ -412,7 +416,7 @@ export default function ActiveWorkout() {
     if (!newCompletedSets[exerciseId]) {
       newCompletedSets[exerciseId] = [];
     }
-    newCompletedSets[exerciseId].push(currentSet);
+    newCompletedSets[exerciseId] = [...newCompletedSets[exerciseId], currentSet];
     setCompletedSets(newCompletedSets);
 
     if (currentSet < currentExercise.sets) {

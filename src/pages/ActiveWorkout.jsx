@@ -965,7 +965,7 @@ export default function ActiveWorkout() {
                                         ? 'border-white text-white'
                                         : 'border-slate-600 text-slate-400'
                                     }`}>
-                                      {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}
+                                      {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}{subEx.weight > 0 ? ` · ${subEx.weight}kg` : ''}
                                     </Badge>
                                   </button>
                                 ))}

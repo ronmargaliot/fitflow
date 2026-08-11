@@ -477,7 +477,7 @@ export default function ExerciseItem({
                             <Play className="w-2.5 h-2.5 text-purple-600" />
                           </div>
                           <Badge variant="outline" className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50">
-                            {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}
+                            {subEx.name}: {subEx.exercise_type === 'time' ? `${subEx.duration_seconds}s` : `${subEx.reps} reps`}{subEx.weight > 0 ? ` · ${subEx.weight}kg` : ''}
                           </Badge>
                         </button>
                       ))}

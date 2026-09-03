@@ -100,12 +100,13 @@ function Stat({ label, value }) {
 }
 
 export default function MeasurementChart({ records, metricKey, metricLabel, metricUnit, timeFrame }) {
+  const [showRaw, setShowRaw] = useState(true);
   const [showTrend, setShowTrend] = useState(true);
   const [showAvg7, setShowAvg7] = useState(true);
   const [showAvg30, setShowAvg30] = useState(true);
 
   const data = useMemo(() => computeChartData(records, metricKey, timeFrame), [records, metricKey, timeFrame]);
-  const showMap = { trend: showTrend, avg7: showAvg7, avg30: showAvg30 };
+  const showMap = { raw: showRaw, trend: showTrend, avg7: showAvg7, avg30: showAvg30 };
 
   if (data.length === 0) {
     return (
@@ -124,7 +125,7 @@ export default function MeasurementChart({ records, metricKey, metricLabel, metr
     <Card className="border-slate-200">
       <CardContent className="p-4">
         <div className="flex flex-wrap gap-2 mb-3">
-          <Toggle active={true} color="#6366f1" label="Raw" onClick={() => {}} />
+          <Toggle active={showRaw} onClick={() => setShowRaw(!showRaw)} color="#6366f1" label="Raw" />
           <Toggle active={showTrend} onClick={() => setShowTrend(!showTrend)} color="#f59e0b" label="Trend" />
           <Toggle active={showAvg7} onClick={() => setShowAvg7(!showAvg7)} color="#10b981" label="7D Avg" />
           <Toggle active={showAvg30} onClick={() => setShowAvg30(!showAvg30)} color="#8b5cf6" label="30D Avg" />
@@ -138,7 +139,7 @@ export default function MeasurementChart({ records, metricKey, metricLabel, metr
                 tick={{ fontSize: 10, fill: '#94a3b8' }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} domain={['dataMin', 'dataMax']} />
               <Tooltip content={<CustomTooltip unit={metricUnit} showMap={showMap} />} />
-              <Line type="monotone" dataKey="raw" name={metricLabel} stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+              {showRaw && <Line type="monotone" dataKey="raw" name={metricLabel} stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />}
               {showTrend && <Line type="linear" dataKey="trend" name="Trend" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} />}
               {showAvg7 && <Line type="monotone" dataKey="avg7" name="7D Avg" stroke="#10b981" strokeWidth={1.5} dot={false} />}
               {showAvg30 && <Line type="monotone" dataKey="avg30" name="30D Avg" stroke="#8b5cf6" strokeWidth={1.5} dot={false} />}

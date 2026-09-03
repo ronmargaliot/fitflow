@@ -22,6 +22,16 @@
       ],
       "default": "community",
       "description": "Default tab to show on the home page"
+    },
+    "body_parts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "Waist"
+      ],
+      "description": "Custom body parts tracked for circumference measurements"
     }
   },
   "required": []

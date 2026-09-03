@@ -1,0 +1,33 @@
+{
+  "name": "BodyMeasurement",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the measurement"
+    },
+    "weight_kg": {
+      "type": "number",
+      "description": "Body weight in kilograms"
+    },
+    "measurements": {
+      "type": "object",
+      "description": "Map of body part name to circumference in cm"
+    }
+  },
+  "required": [
+    "date"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

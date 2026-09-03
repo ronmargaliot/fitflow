@@ -55,6 +55,7 @@ import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Progress from './pages/Progress';
 import WorkoutDetail from './pages/WorkoutDetail';
+import Body from './pages/Body';
 import __Layout from './Layout.jsx';
 
 
@@ -67,6 +68,7 @@ export const PAGES = {
     "Profile": Profile,
     "Progress": Progress,
     "WorkoutDetail": WorkoutDetail,
+    "Body": Body,
 }
 
 export const pagesConfig = {

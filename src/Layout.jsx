@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Home, TrendingUp, User, Dumbbell, Bell } from 'lucide-react';
+import { Home, TrendingUp, User, Dumbbell, Bell, Ruler } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
@@ -88,6 +88,18 @@ export default function Layout({ children, currentPageName }) {
               >
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-xs">Progress</span>
+              </Button>
+            </Link>
+
+            <Link to={createPageUrl('Body')}>
+              <Button 
+                variant="ghost" 
+                className={`flex flex-col items-center gap-1 h-auto py-2 px-3 ${
+                  currentPageName === 'Body' ? 'text-indigo-600' : 'text-slate-500'
+                }`}
+              >
+                <Ruler className="w-5 h-5" />
+                <span className="text-xs">Body</span>
               </Button>
             </Link>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
+import { Target } from 'lucide-react';
 import { format, differenceInDays, subDays } from 'date-fns';
 
 export default function MeasurementStats({ allPoints, timeFrame, metricKey, metricLabel, metricUnit, currentUser, onUpdateUser }) {
@@ -69,10 +70,13 @@ export default function MeasurementStats({ allPoints, timeFrame, metricKey, metr
       </div>
 
       {isWeight && (
-        <div className="bg-slate-50 rounded-lg p-2.5">
-          <p className="text-xs text-slate-400">Target</p>
+        <div className={`rounded-lg p-2.5 ${goalWeight != null ? 'bg-red-50' : 'bg-slate-50'}`}>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
+            <Target className="w-3 h-3 text-red-500" />
+            Target
+          </p>
           {editingGoal ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 mt-0.5">
               <Input
                 type="number"
                 step="0.1"
@@ -85,12 +89,20 @@ export default function MeasurementStats({ allPoints, timeFrame, metricKey, metr
               />
               <span className="text-xs text-slate-400">{metricUnit}</span>
             </div>
+          ) : goalWeight != null ? (
+            <button
+              onClick={() => { setGoalInput(goalWeight || ''); setEditingGoal(true); }}
+              className="text-sm font-semibold text-red-600 hover:text-red-700 mt-0.5"
+            >
+              {goalWeight} {metricUnit}
+            </button>
           ) : (
             <button
               onClick={() => { setGoalInput(goalWeight || ''); setEditingGoal(true); }}
-              className="text-sm font-semibold text-slate-900 hover:text-indigo-600"
+              className="mt-0.5 inline-flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-red-300 bg-red-50 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors"
             >
-              {goalWeight != null ? `${goalWeight} ${metricUnit}` : 'Set goal'}
+              <Target className="w-3 h-3" />
+              Set goal
             </button>
           )}
         </div>

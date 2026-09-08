@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { format, subDays } from 'date-fns';
 import {
-  ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 
 function computeChartData(records, metricKey, timeFrame) {
@@ -102,7 +102,7 @@ function Stat({ label, value }) {
   );
 }
 
-export default function MeasurementChart({ records, metricKey, metricLabel, metricUnit, timeFrame }) {
+export default function MeasurementChart({ records, metricKey, metricLabel, metricUnit, timeFrame, goalWeight, annotations = [] }) {
   const [showRaw, setShowRaw] = useState(true);
   const [showTrend, setShowTrend] = useState(true);
   const [showAvg7, setShowAvg7] = useState(true);
@@ -146,6 +146,12 @@ export default function MeasurementChart({ records, metricKey, metricLabel, metr
               {showTrend && <Line type="linear" dataKey="trend" name="Trend" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} />}
               {showAvg7 && <Line type="monotone" dataKey="avg7" name="7D Avg" stroke="#10b981" strokeWidth={1.5} dot={false} />}
               {showAvg30 && <Line type="monotone" dataKey="avg30" name="30D Avg" stroke="#8b5cf6" strokeWidth={1.5} dot={false} />}
+              {goalWeight != null && (
+                <ReferenceLine y={goalWeight} stroke="#ef4444" strokeDasharray="4 4" label={{ value: 'Goal', fill: '#ef4444', fontSize: 10, position: 'insideTopRight' }} />
+              )}
+              {annotations.map(a => (
+                <ReferenceLine key={a.id} x={a.date} stroke="#0ea5e9" strokeDasharray="2 2" label={{ value: a.label, fill: '#0ea5e9', fontSize: 9, position: 'top' }} />
+              ))}
             </ComposedChart>
           </ResponsiveContainer>
         </div>

@@ -1,0 +1,30 @@
+{
+  "name": "BodyAnnotation",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the annotation"
+    },
+    "label": {
+      "type": "string",
+      "description": "Annotation label (e.g. diet change, new program, illness)"
+    }
+  },
+  "required": [
+    "date",
+    "label"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

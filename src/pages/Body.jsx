@@ -6,6 +6,10 @@ import { Ruler, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import MeasurementForm from '@/components/body/MeasurementForm';
 import MeasurementChart from '@/components/body/MeasurementChart';
+import MeasurementStats from '@/components/body/MeasurementStats';
+import WeightDistribution from '@/components/body/WeightDistribution';
+import WeeklyComparison from '@/components/body/WeeklyComparison';
+import AnnotationManager from '@/components/body/AnnotationManager';
 import MeasurementList from '@/components/body/MeasurementList';
 import BodyPartManager from '@/components/body/BodyPartManager';
 
@@ -35,6 +39,11 @@ export default function Body() {
     queryFn: () => base44.entities.BodyMeasurement.list('-date'),
   });
 
+  const { data: annotations = [] } = useQuery({
+    queryKey: ['bodyAnnotations'],
+    queryFn: () => base44.entities.BodyAnnotation.list('-date'),
+  });
+
   const bodyParts = currentUser?.body_parts || ['Waist'];
 
   const metrics = [
@@ -42,6 +51,15 @@ export default function Body() {
     ...bodyParts.map(p => ({ key: p, label: p, unit: 'cm' })),
   ];
   const selectedMetricObj = metrics.find(m => m.key === selectedMetric) || metrics[0];
+
+  // All points for the selected metric (sorted ascending)
+  const allPoints = measurements
+    .map(r => ({
+      date: r.date,
+      value: selectedMetric === 'weight' ? r.weight_kg : (r.measurements?.[selectedMetric] ?? null),
+    }))
+    .filter(p => p.value != null && p.value > 0)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const saveMutation = useMutation({
     mutationFn: ({ data, id }) => id
@@ -70,10 +88,19 @@ export default function Body() {
     }
   };
 
+  const handleUpdateUser = async (data) => {
+    try {
+      await base44.auth.updateMe(data);
+      setCurrentUser(prev => ({ ...prev, ...data }));
+    } catch {
+      toast.error('Failed to save setting');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <header className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Ruler className="w-5 h-5 text-indigo-600" />
@@ -87,80 +114,97 @@ export default function Body() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Left: Log form */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-20">
-              <MeasurementForm
-                bodyParts={bodyParts}
-                editingEntry={editingEntry}
-                onSave={(data, id) => saveMutation.mutate({ data, id })}
-                onCancel={() => setEditingEntry(null)}
-              />
-            </div>
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        <MeasurementForm
+          bodyParts={bodyParts}
+          editingEntry={editingEntry}
+          onSave={(data, id) => saveMutation.mutate({ data, id })}
+          onCancel={() => setEditingEntry(null)}
+        />
+
+        <div>
+          <p className="text-xs font-medium text-slate-500 mb-2">Metric</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {metrics.map(m => (
+              <button
+                key={m.key}
+                onClick={() => setSelectedMetric(m.key)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedMetric === m.key
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Right: Chart + History */}
-          <div className="lg:col-span-2 space-y-5">
-            <div>
-              <p className="text-xs font-medium text-slate-500 mb-2">Metric</p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {metrics.map(m => (
-                  <button
-                    key={m.key}
-                    onClick={() => setSelectedMetric(m.key)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                      selectedMetric === m.key
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div className="flex gap-2">
+          {TIME_FRAMES.map(tf => (
+            <button
+              key={tf.key}
+              onClick={() => setTimeFrame(tf.key)}
+              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                timeFrame === tf.key
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              {tf.label}
+            </button>
+          ))}
+        </div>
 
-            <div className="flex gap-2">
-              {TIME_FRAMES.map(tf => (
-                <button
-                  key={tf.key}
-                  onClick={() => setTimeFrame(tf.key)}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    timeFrame === tf.key
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  {tf.label}
-                </button>
-              ))}
-            </div>
+        <MeasurementChart
+          records={measurements}
+          metricKey={selectedMetricObj.key}
+          metricLabel={selectedMetricObj.label}
+          metricUnit={selectedMetricObj.unit}
+          timeFrame={timeFrame}
+          goalWeight={selectedMetric === 'weight' ? currentUser?.goal_weight : null}
+          annotations={annotations}
+        />
 
-            <MeasurementChart
-              records={measurements}
-              metricKey={selectedMetricObj.key}
-              metricLabel={selectedMetricObj.label}
-              metricUnit={selectedMetricObj.unit}
-              timeFrame={timeFrame}
+        <MeasurementStats
+          allPoints={allPoints}
+          timeFrame={timeFrame}
+          metricKey={selectedMetric}
+          metricLabel={selectedMetricObj.label}
+          metricUnit={selectedMetricObj.unit}
+          currentUser={currentUser}
+          onUpdateUser={handleUpdateUser}
+        />
+
+        <WeightDistribution
+          records={measurements}
+          metricKey={selectedMetric}
+          metricLabel={selectedMetricObj.label}
+          metricUnit={selectedMetricObj.unit}
+        />
+
+        <WeeklyComparison
+          allPoints={allPoints}
+          metricLabel={selectedMetricObj.label}
+          metricUnit={selectedMetricObj.unit}
+        />
+
+        <AnnotationManager annotations={annotations} />
+
+        <div>
+          <h3 className="font-semibold text-slate-900 mb-2">History</h3>
+          {isLoading ? (
+            <p className="text-sm text-slate-400">Loading...</p>
+          ) : measurements.length === 0 ? (
+            <p className="text-sm text-slate-400">No entries yet. Log your first measurement above.</p>
+          ) : (
+            <MeasurementList
+              entries={measurements}
+              onEdit={setEditingEntry}
+              onDelete={(id) => deleteMutation.mutate(id)}
             />
-
-            <div>
-              <h3 className="font-semibold text-slate-900 mb-2">History</h3>
-              {isLoading ? (
-                <p className="text-sm text-slate-400">Loading...</p>
-              ) : measurements.length === 0 ? (
-                <p className="text-sm text-slate-400">No entries yet. Log your first measurement above.</p>
-              ) : (
-                <MeasurementList
-                  entries={measurements}
-                  onEdit={setEditingEntry}
-                  onDelete={(id) => deleteMutation.mutate(id)}
-                />
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </main>
 

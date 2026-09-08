@@ -32,6 +32,15 @@
         "Waist"
       ],
       "description": "Custom body parts tracked for circumference measurements"
+    },
+    "goal_weight": {
+      "type": "number",
+      "description": "Target weight in kg"
+    },
+    "progress_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date for progress tracking"
     }
   },
   "required": []

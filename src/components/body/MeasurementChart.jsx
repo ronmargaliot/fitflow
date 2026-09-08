@@ -17,7 +17,10 @@ function computeChartData(records, metricKey, timeFrame) {
   if (points.length === 0) return [];
 
   let filtered = points;
-  if (timeFrame !== 'all') {
+  if (timeFrame === 'ytd') {
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    filtered = points.filter(p => new Date(p.date) >= startOfYear);
+  } else if (timeFrame !== 'all') {
     const cutoff = subDays(new Date(), parseInt(timeFrame));
     filtered = points.filter(p => new Date(p.date) >= cutoff);
   }
@@ -131,7 +134,7 @@ export default function MeasurementChart({ records, metricKey, metricLabel, metr
           <Toggle active={showAvg30} onClick={() => setShowAvg30(!showAvg30)} color="#8b5cf6" label="30D Avg" />
         </div>
 
-        <div className="h-64">
+        <div className="h-64 lg:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />

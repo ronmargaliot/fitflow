@@ -124,6 +124,18 @@ export default function MeasurementChart({ records, metricKey, metricLabel, metr
 
   const latest = data[data.length - 1];
 
+  // Expand Y-axis domain to include goal line if set
+  const allValues = data.map(d => d.raw).filter(v => v != null);
+  let yDomain = ['dataMin', 'dataMax'];
+  if (goalWeight != null && allValues.length > 0) {
+    const dataMin = Math.min(...allValues);
+    const dataMax = Math.max(...allValues);
+    const min = Math.min(dataMin, goalWeight);
+    const max = Math.max(dataMax, goalWeight);
+    const padding = (max - min) * 0.1;
+    yDomain = [+(min - padding).toFixed(1), +(max + padding).toFixed(1)];
+  }
+
   return (
     <Card className="border-slate-200">
       <CardContent className="p-4">
@@ -140,7 +152,7 @@ export default function MeasurementChart({ records, metricKey, metricLabel, metr
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="date" tickFormatter={d => format(new Date(d), 'MMM d')}
                 tick={{ fontSize: 10, fill: '#94a3b8' }} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} domain={['dataMin', 'dataMax']} />
+              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} domain={yDomain} />
               <Tooltip content={<CustomTooltip unit={metricUnit} showMap={showMap} />} />
               {showRaw && <Line type="monotone" dataKey="raw" name={metricLabel} stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />}
               {showTrend && <Line type="linear" dataKey="trend" name="Trend" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} />}

@@ -15,9 +15,11 @@ import BodyPartManager from '@/components/body/BodyPartManager';
 
 const TIME_FRAMES = [
   { key: '7', label: '7D' },
+  { key: '14', label: '14D' },
   { key: '30', label: '30D' },
   { key: '90', label: '90D' },
   { key: '180', label: '180D' },
+  { key: '365', label: '1Y' },
   { key: 'ytd', label: 'YTD' },
   { key: 'all', label: 'All' },
 ];

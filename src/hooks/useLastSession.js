@@ -33,3 +33,11 @@ export function buildPerformanceMap(session) {
   });
   return map;
 }
+
+export function resolvePerformance(exercise, perfMap) {
+  const manual = exercise.last_performance;
+  if (manual && (manual.sets || manual.reps || (manual.weight != null && manual.weight > 0))) {
+    return { sets: manual.sets, reps: manual.reps, weight: manual.weight, date: null, manual: true };
+  }
+  return perfMap[exercise.name] || null;
+}

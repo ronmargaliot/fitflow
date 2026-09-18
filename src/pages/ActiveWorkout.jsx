@@ -30,7 +30,7 @@ import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
 import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal';
 import FullScreenTimerModal from '@/components/workout/FullScreenTimerModal';
 import LastPerformance from '@/components/workout/LastPerformance';
-import { useLastSession, buildPerformanceMap } from '@/hooks/useLastSession';
+import { useLastSession, buildPerformanceMap, resolvePerformance } from '@/hooks/useLastSession';
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -909,6 +909,25 @@ export default function ActiveWorkout() {
                                 className="bg-slate-600 border-slate-500 text-white h-8"
                                 placeholder="Optional notes" />
                             </div>
+
+                            <div>
+                              <label className="text-xs text-slate-400 block mb-1">Last Performance Override (optional)</label>
+                              <div className="grid grid-cols-3 gap-2">
+                                <Input type="number" placeholder="Sets"
+                                  value={editData.last_performance?.sets || ''}
+                                  onChange={(e) => setEditData({ ...editData, last_performance: { ...editData.last_performance, sets: parseInt(e.target.value) || 0 } })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                                <Input placeholder="Reps"
+                                  value={editData.last_performance?.reps || ''}
+                                  onChange={(e) => setEditData({ ...editData, last_performance: { ...editData.last_performance, reps: e.target.value } })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                                <Input type="number" placeholder="kg"
+                                  value={editData.last_performance?.weight || ''}
+                                  onChange={(e) => setEditData({ ...editData, last_performance: { ...editData.last_performance, weight: parseFloat(e.target.value) || 0 } })}
+                                  className="bg-slate-600 border-slate-500 text-white h-8" />
+                              </div>
+                              <p className="text-xs text-slate-500 mt-1">Fill to override inherited data</p>
+                            </div>
                           </>
                         )}
                         
@@ -1027,9 +1046,9 @@ export default function ActiveWorkout() {
                               {exercise.notes}
                             </p>
                           )}
-                          {perfMap[exercise.name] && (
+                          {resolvePerformance(exercise, perfMap) && (
                             <div className="mt-2">
-                              <LastPerformance performance={perfMap[exercise.name]} dark />
+                              <LastPerformance performance={resolvePerformance(exercise, perfMap)} dark />
                             </div>
                           )}
                         </div>

@@ -109,6 +109,21 @@
           "demo_video": {
             "type": "string"
           },
+          "last_performance": {
+            "type": "object",
+            "description": "Manually overridden last performance data (bypasses inherited session data)",
+            "properties": {
+              "sets": {
+                "type": "number"
+              },
+              "reps": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number"
+              }
+            }
+          },
           "superset_exercises": {
             "type": "array",
             "description": "Sub-exercises for superset type",
@@ -146,6 +161,21 @@
                 },
                 "demo_video": {
                   "type": "string"
+                },
+                "last_performance": {
+                  "type": "object",
+                  "description": "Manually overridden last performance data",
+                  "properties": {
+                    "sets": {
+                      "type": "number"
+                    },
+                    "reps": {
+                      "type": "string"
+                    },
+                    "weight": {
+                      "type": "number"
+                    }
+                  }
                 }
               }
             }

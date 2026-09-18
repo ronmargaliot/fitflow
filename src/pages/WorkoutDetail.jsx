@@ -40,7 +40,7 @@ import AIWorkoutGenerator from '@/components/workout/AIWorkoutGenerator';
 import { Wand2, Copy as CopyIcon } from 'lucide-react';
 import ShareButton from '@/components/social/ShareButton';
 import ExportButton from '@/components/workout/ExportButton';
-import { useLastSession, buildPerformanceMap } from '@/hooks/useLastSession';
+import { useLastSession, buildPerformanceMap, resolvePerformance } from '@/hooks/useLastSession';
 
 export default function WorkoutDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -369,7 +369,7 @@ export default function WorkoutDetail() {
                             dragHandleProps={isOwner ? provided.dragHandleProps : null}
                             workoutColor={workout.color}
                             readOnly={!isOwner}
-                            lastPerformance={perfMap[exercise.name]}
+                            lastPerformance={resolvePerformance(exercise, perfMap)}
                           />
                         </div>
                       )}

@@ -289,6 +289,43 @@ export default function ExerciseItem({
                       </Button>
                     </div>
                   </div>
+                  <div>
+                    <label className="text-xs text-slate-500">Last Performance (optional)</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      <Input
+                        type="number"
+                        placeholder="Sets"
+                        className="h-8"
+                        value={subEx.last_performance?.sets || ''}
+                        onChange={(e) => {
+                          const newSubs = [...(editData.superset_exercises || [])];
+                          newSubs[idx] = { ...subEx, last_performance: { ...subEx.last_performance, sets: parseInt(e.target.value) || 0 } };
+                          setEditData({ ...editData, superset_exercises: newSubs });
+                        }}
+                      />
+                      <Input
+                        placeholder="Reps"
+                        className="h-8"
+                        value={subEx.last_performance?.reps || ''}
+                        onChange={(e) => {
+                          const newSubs = [...(editData.superset_exercises || [])];
+                          newSubs[idx] = { ...subEx, last_performance: { ...subEx.last_performance, reps: e.target.value } };
+                          setEditData({ ...editData, superset_exercises: newSubs });
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="kg"
+                        className="h-8"
+                        value={subEx.last_performance?.weight || ''}
+                        onChange={(e) => {
+                          const newSubs = [...(editData.superset_exercises || [])];
+                          newSubs[idx] = { ...subEx, last_performance: { ...subEx.last_performance, weight: parseFloat(e.target.value) || 0 } };
+                          setEditData({ ...editData, superset_exercises: newSubs });
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
               
@@ -407,6 +444,30 @@ export default function ExerciseItem({
                     <Search className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Last Performance Override (optional)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Sets"
+                    value={editData.last_performance?.sets || ''}
+                    onChange={(e) => setEditData({ ...editData, last_performance: { ...editData.last_performance, sets: parseInt(e.target.value) || 0 } })}
+                  />
+                  <Input
+                    placeholder="Reps"
+                    value={editData.last_performance?.reps || ''}
+                    onChange={(e) => setEditData({ ...editData, last_performance: { ...editData.last_performance, reps: e.target.value } })}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="kg"
+                    value={editData.last_performance?.weight || ''}
+                    onChange={(e) => setEditData({ ...editData, last_performance: { ...editData.last_performance, weight: parseFloat(e.target.value) || 0 } })}
+                  />
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Fill to override inherited data from last session</p>
               </div>
             </>
           )}

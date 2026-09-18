@@ -16,32 +16,41 @@ import { toast } from "sonner";
 export default function TextImageWorkoutGenerator({ open, onClose, onGenerate }) {
   const [generating, setGenerating] = useState(false);
   const [workoutText, setWorkoutText] = useState('');
-  const [uploadedFile, setUploadedFile] = useState(null);
-  const [fileUrl, setFileUrl] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'text/plain', 'application/pdf'];
-    if (!validTypes.includes(file.type)) {
-      toast.error('Please upload an image (PNG, JPG), text file, or PDF');
-      return;
+    const validFiles = files.filter(f => validTypes.includes(f.type));
+    if (validFiles.length < files.length) {
+      toast.error('Some files skipped — only PNG, JPG, PDF, or TXT allowed.');
     }
+    if (validFiles.length === 0) return;
 
     try {
-      setUploadedFile(file);
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFileUrl(file_url);
-      toast.success('File uploaded successfully');
+      const uploaded = await Promise.all(
+        validFiles.map(async (file) => {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          return { file, url: file_url, name: file.name, type: file.type };
+        })
+      );
+      setUploadedFiles(prev => [...prev, ...uploaded]);
+      toast.success(`${uploaded.length} file(s) uploaded`);
     } catch (error) {
-      toast.error('Failed to upload file');
+      toast.error('Failed to upload file(s)');
       console.error(error);
     }
+    e.target.value = '';
+  };
+
+  const handleRemoveFile = (idx) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleGenerate = async () => {
-    if (!workoutText.trim() && !fileUrl) {
+    if (!workoutText.trim() && uploadedFiles.length === 0) {
       toast.error('Please provide workout text or upload a file');
       return;
     }
@@ -51,11 +60,17 @@ export default function TextImageWorkoutGenerator({ open, onClose, onGenerate })
     try {
       let extractedData;
 
-      // If file is uploaded, extract data from it
-      if (fileUrl) {
-        const extractResult = await base44.integrations.Core.ExtractDataFromUploadedFile({
-          file_url: fileUrl,
-          json_schema: {
+      // If files are uploaded, send all images to the LLM at once
+      if (uploadedFiles.length > 0) {
+        const fileUrls = uploadedFiles.map(f => f.url);
+        const prompt = `Analyze the following workout plan screenshot(s) and extract ALL exercises from every image.${workoutText.trim() ? ` Also consider this additional context: "${workoutText.trim()}"` : ''}
+
+Extract the workout name and a complete list of all exercises with their sets, reps, rest periods, and any other details visible across all images. Merge duplicates if the same exercise appears in multiple screenshots.`;
+
+        extractedData = await base44.integrations.Core.InvokeLLM({
+          prompt,
+          file_urls: fileUrls,
+          response_json_schema: {
             type: 'object',
             properties: {
               workout_name: { type: 'string' },
@@ -76,12 +91,6 @@ export default function TextImageWorkoutGenerator({ open, onClose, onGenerate })
             }
           }
         });
-
-        if (extractResult.status === 'error') {
-          throw new Error(extractResult.details);
-        }
-
-        extractedData = extractResult.output;
       } else {
         // Use text input with LLM
         const prompt = `Parse the following workout text and extract structured workout data.
@@ -149,7 +158,7 @@ Return structured data that can be used to create a workout.`;
 
       const workoutData = {
         name: extractedData.workout_name || 'Imported Workout',
-        description: `Imported from ${uploadedFile ? uploadedFile.name : 'text'}`,
+        description: `Imported from ${uploadedFiles.length > 0 ? uploadedFiles.map(f => f.name).join(', ') : 'text'}`,
         default_rest: 60,
         rest_between_exercises: 90,
         exercises: exercises,
@@ -163,8 +172,7 @@ Return structured data that can be used to create a workout.`;
       onGenerate(workoutData);
       onClose();
       setWorkoutText('');
-      setUploadedFile(null);
-      setFileUrl('');
+      setUploadedFiles([]);
     } catch (error) {
       console.error('Generation error:', error);
       toast.error('Failed to generate workout. Please try again.');
@@ -188,33 +196,48 @@ Return structured data that can be used to create a workout.`;
 
         <div className="space-y-4 py-4">
           <div>
-            <Label>Upload Workout Image or File</Label>
+            <Label>Upload Workout Screenshots or Files</Label>
             <div className="mt-2">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  {uploadedFile ? (
-                    <>
-                      <FileText className="w-10 h-10 text-slate-400 mb-2" />
-                      <p className="text-sm text-slate-600">{uploadedFile.name}</p>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="w-10 h-10 text-slate-400 mb-2" />
-                      <p className="text-sm text-slate-600">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">PNG, JPG, PDF, or TXT</p>
-                    </>
-                  )}
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                <div className="flex flex-col items-center justify-center pt-4 pb-4">
+                  <ImageIcon className="w-8 h-8 text-slate-400 mb-1" />
+                  <p className="text-sm text-slate-600">
+                    <span className="font-semibold">Click to upload</span> — one or more files
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">PNG, JPG, PDF, or TXT</p>
                 </div>
                 <input
                   type="file"
                   className="hidden"
                   accept="image/*,.txt,.pdf"
+                  multiple
                   onChange={handleFileUpload}
                 />
               </label>
             </div>
+            {uploadedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {uploadedFiles.map((f, idx) => (
+                  <div key={idx} className="relative group">
+                    {f.type?.startsWith('image/') ? (
+                      <img src={f.url} alt={f.name} className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
+                    ) : (
+                      <div className="w-16 h-16 flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+                        <FileText className="w-6 h-6 text-slate-400" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(idx)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 shadow-sm"
+                    >
+                      ×
+                    </button>
+                    <p className="text-[10px] text-slate-500 mt-1 max-w-[64px] truncate">{f.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="relative">
@@ -244,7 +267,7 @@ Return structured data that can be used to create a workout.`;
           </Button>
           <Button 
             onClick={handleGenerate} 
-            disabled={generating || (!workoutText.trim() && !fileUrl)}
+            disabled={generating || (!workoutText.trim() && uploadedFiles.length === 0)}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {generating ? (

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Check, X, GripVertical, Clock, Weight, MessageSquare, Timer, Hash, Play, Search, Layers, Plus } from 'lucide-react';
 import ExerciseDemoModal from './ExerciseDemoModal';
 import VideoSearchModal from './VideoSearchModal';
+import LastPerformance from './LastPerformance';
 import { motion } from 'framer-motion';
 import {
   AlertDialog,
@@ -25,7 +26,8 @@ export default function ExerciseItem({
   onDelete, 
   dragHandleProps,
   workoutColor,
-  readOnly = false
+  readOnly = false,
+  lastPerformance
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(exercise);
@@ -521,6 +523,11 @@ export default function ExerciseItem({
                   </Badge>
                 )}
               </div>
+              {lastPerformance && (
+                <div className="mt-2">
+                  <LastPerformance performance={lastPerformance} />
+                </div>
+              )}
             </div>
             
             {!readOnly && (

@@ -29,6 +29,8 @@ import UndoToast from '@/components/workout/UndoToast';
 import ActiveExerciseTimer from '@/components/workout/ActiveExerciseTimer';
 import ExerciseDemoModal from '@/components/workout/ExerciseDemoModal';
 import FullScreenTimerModal from '@/components/workout/FullScreenTimerModal';
+import LastPerformance from '@/components/workout/LastPerformance';
+import { useLastSession, buildPerformanceMap } from '@/hooks/useLastSession';
 
 export default function ActiveWorkout() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -256,6 +258,8 @@ export default function ActiveWorkout() {
   });
 
   const exercises = localExercises;
+  const { data: lastSession } = useLastSession(workoutId);
+  const perfMap = buildPerformanceMap(lastSession);
   const currentExercise = exercises[currentExerciseIndex];
   const isSuperset = currentExercise?.exercise_type === 'superset';
   const currentSubExercise = isSuperset && currentExercise?.superset_exercises?.[currentSubExerciseIndex];
@@ -1022,6 +1026,11 @@ export default function ActiveWorkout() {
                               <MessageSquare className="w-3 h-3" />
                               {exercise.notes}
                             </p>
+                          )}
+                          {perfMap[exercise.name] && (
+                            <div className="mt-2">
+                              <LastPerformance performance={perfMap[exercise.name]} dark />
+                            </div>
                           )}
                         </div>
                         
